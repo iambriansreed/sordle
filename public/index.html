@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <link rel="icon" href="favicon.ico" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="theme-color" content="#000000" />
+        <meta name="description" content="Sort of like Wordle" />
+        <link rel="apple-touch-icon" href="logo192.png" />
+        <link rel="manifest" href="manifest.json" />
+        <title>Sordle</title>
+        <link media="all" rel="stylesheet" href="main.css" />
+        <script>
+            if (location.protocol !== 'https:') location.protocol = 'https:';
+        </script>
+    </head>
+    <body>
+        <noscript>You need to enable JavaScript to run this app.</noscript>
+        <div class="app">
+            <h1>Sordle</h1>
+            <main>
+                <div class="attempts"></div>
+                <div class="keyboard" role="group" aria-label="Keyboard">
+                    <div>
+                        <button type="button" data-key="q">q</button>
+                        <button type="button" data-key="w">w</button>
+                        <button type="button" data-key="e">e</button>
+                        <button type="button" data-key="r">r</button>
+                        <button type="button" data-key="t">t</button>
+                        <button type="button" data-key="y">y</button>
+                        <button type="button" data-key="u">u</button>
+                        <button type="button" data-key="i">i</button>
+                        <button type="button" data-key="o">o</button>
+                        <button type="button" data-key="p">p</button>
+                    </div>
+                    <div>
+                        <button type="button" data-key="a">a</button>
+                        <button type="button" data-key="s">s</button>
+                        <button type="button" data-key="d">d</button>
+                        <button type="button" data-key="f">f</button>
+                        <button type="button" data-key="g">g</button>
+                        <button type="button" data-key="h">h</button>
+                        <button type="button" data-key="j">j</button>
+                        <button type="button" data-key="k">k</button>
+                        <button type="button" data-key="l">l</button>
+                    </div>
+                    <div>
+                        <button type="button" class="lg" data-key="enter">enter</button>
+                        <button type="button" data-key="z">z</button>
+                        <button type="button" data-key="x">x</button>
+                        <button type="button" data-key="c">c</button>
+                        <button type="button" data-key="v">v</button>
+                        <button type="button" data-key="b">b</button>
+                        <button type="button" data-key="n">n</button>
+                        <button type="button" data-key="m">m</button>
+                        <button type="button" data-key="backspace" class="lg" aria-label="backspace">
+                            <svg viewBox="0 0 24 24">
+                                <path
+                                    d="M22 3H7c-.69 0-1.23.35-1.59.88L0 12l5.41 8.11c.36.53.9.89 1.59.89h15c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H7.07L2.4 12l4.66-7H22v14zm-11.59-2L14 13.41 17.59 17 19 15.59 15.41 12 19 8.41 17.59 7 14 10.59 10.41 7 9 8.41 12.59 12 9 15.59z"
+                                />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </main>
+            <div class="overlay">
+                <div data-modal="welcome" class="modal welcome">
+                    <div class="body">
+                        <h2>Welcome to Sordle</h2>
+                        <p class="subtitle">Sort of like Wordle</p>
+                        <p>
+                            You can play this as many times as you want on the same day as long as the free APIs we use
+                            don't limit requests.
+                        </p>
+                        <p>
+                            Thanks to the Random Word API:
+                            <br /><a target="_blank" href="https://random-word-api.herokuapp.com"
+                                >https://random-word-api.herokuapp.com</a
+                            >
+                        </p>
+                        <p>
+                            Thanks to the Free Dictionary API:
+                            <br /><a target="_blank" href="https://dictionaryapi.dev">https://dictionaryapi.dev</a>
+                        </p>
+
+                        <p>
+                            If you want to contribute or donate go visit the sites above as they have to pay for server
+                            costs. If you want to add statistics like the real Wordle app submit a pull request.
+                        </p>
+
+                        <p>
+                            The real Wordle app can be found here:
+                            <a href="https://www.nytimes.com/games/wordle" target="_blank"
+                                >https://www.nytimes.com/games/wordle</a
+                            >. Today's word isn't Snarl. I missed that one on the 15th of November 2022. :|
+                        </p>
+
+                        <h4>Made with ❤️ by <a href="https://iambrian.com">Brian</a></h4>
+                    </div>
+                    <div class="footer">
+                        <button type="button" data-action="loadWord">Start</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="helper"></div>
+        <template data-modal="success">
+            <div class="modal success">
+                <div class="body">
+                    <h2>Nice job!</h2>
+                    <p>You got it in only <span data-attempt-text></span>.</p>
+                    <div data-definition>Loading...</div>
+                </div>
+                <div class="footer">
+                    <button type="button" data-action="loadWord">Retry</button>
+                </div>
+            </div>
+        </template>
+        <template data-modal="fail">
+            <div class="modal failure">
+                <div class="body">
+                    <h2>Nice try.</h2>
+                    <p>No worries, you'll get it next time!</p>
+                    <div data-definition>Loading...</div>
+                </div>
+                <div class="footer">
+                    <button type="button" data-action="loadWord">Retry</button>
+                </div>
+            </div>
+        </template>
+        <script src="main.js"></script>
+    </body>
+</html>
