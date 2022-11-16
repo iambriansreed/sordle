@@ -311,6 +311,33 @@ const $ = (selector: string, container: ParentNode = document): HTMLElement =>
         setAttempt({ chars: [], index: attempt.index + 1 });
     };
 
+    const handleKey = (key: string) => {
+        const k = key.toLowerCase();
+
+        if ('backspace' === k) {
+            if (attempt.chars.length) {
+                attempt.chars.pop();
+                setAttempt(attempt);
+            } else {
+                animateError();
+            }
+            return;
+        }
+
+        if ('enter' === k) {
+            handleEnter();
+            return;
+        }
+
+        if (k.length > 1 || 'abcdefghijklmnopqrstuvwxyz'.indexOf(k) === -1) {
+            return;
+        }
+
+        if (attempt.chars.length === WORD_LENGTH) attempt.chars.pop();
+        attempt.chars.push(k);
+        setAttempt(attempt);
+    };
+
     const handleClick = async (e: MouseEvent) => {
         if (flipping) return;
 
@@ -330,24 +357,7 @@ const $ = (selector: string, container: ParentNode = document): HTMLElement =>
 
         if (!key) return;
 
-        if ('backspace' === key) {
-            if (attempt.chars.length) {
-                attempt.chars.pop();
-                setAttempt(attempt);
-            } else {
-                animateError();
-            }
-            return;
-        }
-
-        if ('enter' === key) {
-            handleEnter();
-            return;
-        }
-
-        if (attempt.chars.length === WORD_LENGTH) attempt.chars.pop();
-        attempt.chars.push(key);
-        setAttempt(attempt);
+        handleKey(key);
     };
 
     $app.addEventListener('click', handleClick);
@@ -355,6 +365,8 @@ const $ = (selector: string, container: ParentNode = document): HTMLElement =>
     $overlay.addEventListener('click', () => {
         $overlay.innerHTML = '';
     });
+
+    window.addEventListener('keyup', (e: KeyboardEvent) => { handleKey(e.key) });
 
     getNewWord();
 })();
