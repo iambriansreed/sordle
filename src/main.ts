@@ -1,5 +1,7 @@
 import './main.scss';
 
+const VERSION = '0.1.0';
+
 const MAX_ATTEMPTS = 6;
 
 const WORD_LENGTH = 5;
@@ -112,7 +114,6 @@ const $ = (selector: string, container: ParentNode = document): HTMLElement =>
         await Promise.all([
             ...word.map(async (_, i) =>
                 timeoutPromise(i * ms, () => {
-                    console.log(row.childNodes[i]);
                     (row.childNodes[i] as HTMLElement)!.classList.add('flip');
                 })
             ),
@@ -328,4 +329,6 @@ const $ = (selector: string, container: ParentNode = document): HTMLElement =>
     }
 
     $app.addEventListener('click', handleClick);
+
+    $('[data-version]').innerText = VERSION;
 })();
