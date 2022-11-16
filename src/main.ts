@@ -1,6 +1,6 @@
 import './main.scss';
 
-const MAX_ATTEMPTS = 2;
+const MAX_ATTEMPTS = 6;
 
 const WORD_LENGTH = 5;
 

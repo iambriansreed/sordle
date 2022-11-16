@@ -362,9 +362,9 @@ footer {
     align-items: center;
     opacity: 0.5;
 
-    [data-version] {
-        margin-top: 0.5rem;
-        opacity: 0.7;
-        font-size: 60%;
+    .version {
+        margin-top: 0.75rem;
+        opacity: 0.8;
+        font-size: 80%;
     }
 }
