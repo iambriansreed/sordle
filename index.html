@@ -17,7 +17,7 @@
     <body>
         <noscript>You need to enable JavaScript to run this app.</noscript>
         <div class="app">
-            <h1>Sordle</h1>
+            <h1>S<em class="loader">o</em>rdle</h1>
             <main>
                 <div class="attempts"></div>
                 <div class="keyboard" role="group" aria-label="Keyboard">
@@ -62,17 +62,16 @@
                         </button>
                     </div>
                 </div>
-
-                <footer>
-                    <div>Made with ❤️ by <a href="https://iambrian.com">Brian</a></div>
-                    <div data-version></div>
-                </footer>
             </main>
+            <footer>
+                <div>Made with ❤️ by <a href="https://iambrian.com">Brian</a></div>
+                <div class="version">0.2.1</div>
+            </footer>
             <div class="overlay">
                 <div data-modal="welcome" class="modal welcome">
                     <div class="body">
                         <h2>Welcome to Sordle</h2>
-                        <p class="subtitle">Sort of like Wordle</p>
+                        <p class="subtitle"><em>Sort</em> of like Wordle</p>
                         <p>
                             You can play this as many times as you want on the same day as long as the free APIs we use
                             don't limit requests.
@@ -101,33 +100,37 @@
                         </p>
                     </div>
                     <div class="footer">
-                        <button type="button" data-action="loadWord">Start</button>
+                        <button type="button" data-action="closeModal">Start</button>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="helper"></div>
+        <div class="notify"></div>
         <template data-modal="success">
-            <div class="modal success">
+            <div class="modal">
                 <div class="body">
-                    <h2>Nice job!</h2>
-                    <p>You got it in only <span data-attempt-text></span>.</p>
+                    <div class="success">
+                        <h2>Nice job!</h2>
+                        <p>You got it in only <span data-attempt-text></span>.</p>
+                    </div>
                     <div data-definition>Loading...</div>
                 </div>
                 <div class="footer">
-                    <button type="button" data-action="loadWord">Retry</button>
+                    <button type="button" data-action="closeModal">Start</button>
                 </div>
             </div>
         </template>
         <template data-modal="fail">
-            <div class="modal failure">
+            <div class="modal">
                 <div class="body">
-                    <h2>Nice try.</h2>
-                    <p>No worries, you'll get it next time!</p>
+                    <div class="fail">
+                        <h2>Nice try.</h2>
+                        <p>No worries, you'll get it next time!</p>
+                    </div>
                     <div data-definition>Loading...</div>
                 </div>
                 <div class="footer">
-                    <button type="button" data-action="loadWord">Retry</button>
+                    <button type="button" data-action="closeModal">Try Again</button>
                 </div>
             </div>
         </template>
