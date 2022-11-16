@@ -1,7 +1,5 @@
 import './main.scss';
 
-const VERSION = '0.1.0';
-
 const MAX_ATTEMPTS = 2;
 
 const WORD_LENGTH = 5;
@@ -353,8 +351,6 @@ const $ = (selector: string, container: ParentNode = document): HTMLElement =>
     };
 
     $app.addEventListener('click', handleClick);
-
-    $('[data-version]').innerText = VERSION;
 
     $overlay.addEventListener('click', () => {
         $overlay.innerHTML = '';
