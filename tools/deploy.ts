@@ -14,6 +14,4 @@ fs.writeFileSync(
     replacements.reduce((finalHtml, replacement) => finalHtml.replace(...replacement), indexHtml)
 );
 
-//
-
-throw new Error('Checking if build script works.');
+// throw new Error('Checking if build script works.');
