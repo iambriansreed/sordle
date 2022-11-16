@@ -25,6 +25,20 @@ button {
     display: contents;
 }
 
+.yellow {
+    background-color: $orange;
+    color: white;
+}
+
+.green {
+    background-color: $darkGreen;
+    color: white;
+}
+
+.none {
+    background-color: #444;
+}
+
 .typography {
     font-family: 'Helvetica Neue', 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans',
         -apple-system, BlinkMacSystemFont, sans-serif;
@@ -38,26 +52,31 @@ button {
     @extend .typography;
     cursor: pointer;
 }
+html {
+    height: 100%;
+}
 
 body {
     @extend .typography;
     margin: 0;
+    padding: 0;
     background-color: #222;
     color: #aaa;
+    height: 100%;
 }
 
 a {
     color: #bbb;
 }
 
-.helper {
+.notify {
     position: fixed;
     z-index: 100;
     background: white;
     padding: 0.5rem;
     border-radius: 0.25rem;
     color: #333;
-    top: 6rem;
+    top: 3rem;
     opacity: 0;
     left: 50%;
     transform: translate(-50%, 0);
@@ -71,13 +90,15 @@ a {
 .app {
     max-width: 600px;
     margin: 0 auto;
-    padding: 2rem 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
 
     h1 {
         font-family: Palatino, 'Palatino Linotype', 'Palatino LT STD', 'Book Antiqua', Georgia, serif;
         text-align: center;
-        font-size: 3rem;
-        margin: 0 0 1rem;
+        font-size: 2rem;
+        margin: 1rem 0 1rem;
     }
 
     .overlay {
@@ -91,7 +112,7 @@ a {
         display: flex;
         align-items: flex-start;
         justify-content: center;
-        padding: 4rem;
+        padding: 4rem 1rem;
 
         &:empty {
             display: none;
@@ -108,8 +129,15 @@ a {
             flex-direction: column;
 
             .body {
-                padding: 1rem 2rem 0;
+                padding: 1rem 1rem 0;
                 overflow: auto;
+                overflow-x: hidden;
+                word-break: break-word;
+
+                .success,
+                .fail {
+                    text-align: center;
+                }
             }
 
             .footer {
@@ -124,8 +152,8 @@ a {
             }
 
             .subtitle {
-                font-style: italic;
                 font-size: 1.1rem;
+                opacity: 0.9;
             }
 
             button {
@@ -148,6 +176,11 @@ a {
                 list-style: none;
                 margin: 0;
                 padding: 0;
+            }
+
+            ol {
+                margin: 0;
+                padding: 0 0 0 2rem;
             }
 
             .part-of-speech {
@@ -175,6 +208,7 @@ a {
         .attempt {
             display: flex;
             flex-direction: row;
+            margin: 0 0.7rem;
 
             .char {
                 display: flex;
@@ -196,26 +230,6 @@ a {
 
                 &:active {
                     transform: scale(0.975);
-                }
-
-                &.yellow {
-                    background: transparent;
-                    color: inherit;
-
-                    .back {
-                        background-color: $orange;
-                        color: white;
-                    }
-                }
-
-                &.green {
-                    background: transparent;
-                    color: inherit;
-
-                    .back {
-                        background-color: $darkGreen;
-                        color: white;
-                    }
                 }
 
                 .body {
@@ -252,7 +266,6 @@ a {
 
                 &.flip .body {
                     transform: rotateX(-180deg);
-                    background-color: #444;
                 }
             }
         }
@@ -275,7 +288,7 @@ a {
                 cursor: pointer;
                 text-transform: uppercase;
                 padding: 0 0.25rem;
-                min-height: 4rem;
+                height: 3rem;
                 width: 8%;
                 flex-grow: 0;
                 overflow: hidden;
@@ -286,19 +299,10 @@ a {
                 color: white;
                 border: none;
                 border-radius: 0.25rem;
+                transition: all 200ms;
 
                 &[data-key='enter'] {
                     font-size: 0.9rem;
-                }
-
-                &.yellow {
-                    background-color: $orange;
-                    color: white;
-                }
-
-                &.green {
-                    background-color: $darkGreen;
-                    color: white;
                 }
 
                 &[disabled],
@@ -351,7 +355,7 @@ a {
 }
 
 footer {
-    margin-top: 2rem;
+    margin-top: 1rem;
     display: flex;
     flex-direction: column;
     justify-content: center;
