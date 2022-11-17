@@ -4,8 +4,13 @@ const path = require('path');
 class AsyncDeployPlugin {
     apply(compiler) {
         compiler.hooks.emit.tapPromise('AsyncDeployPlugin', () => {
+            const buildRoot = __dirname + '/build/';
+            const publicRoot = __dirname + '/public/';
+
             return new Promise((resolve) => {
-                const indexHtml = fs.readFileSync('./public/template.html', 'utf-8');
+                fs.cpSync(publicRoot, buildRoot, { recursive: true, force: true });
+
+                const indexHtml = fs.readFileSync(publicRoot + '/template.html', 'utf-8');
 
                 const pkg = JSON.parse(fs.readFileSync('./package.json', 'utf-8'));
 
@@ -15,12 +20,13 @@ class AsyncDeployPlugin {
                 ];
 
                 fs.writeFileSync(
-                    'build/index.html',
+                    buildRoot + 'index.html',
                     replacements.reduce((finalHtml, replacement) => finalHtml.replace(...replacement), indexHtml)
                 );
 
+                fs.rmSync(buildRoot + 'template.html');
+
                 resolve();
-                // throw new Error('Checking if build script works.');
             });
         });
     }

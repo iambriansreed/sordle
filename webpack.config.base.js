@@ -1,6 +1,4 @@
 const path = require('path');
-const RemovePlugin = require('remove-files-webpack-plugin');
-const CopyPlugin = require('copy-webpack-plugin');
 const AsyncDeployPlugin = require('./asyncDeployPlugin');
 
 module.exports = {
@@ -38,15 +36,5 @@ module.exports = {
     resolve: {
         extensions: ['.ts', '.js'],
     },
-    plugins: [
-        new RemovePlugin({
-            before: {
-                include: ['./build'],
-            },
-        }),
-        new CopyPlugin({
-            patterns: [{ from: 'public', to: '' }],
-        }),
-        new AsyncDeployPlugin(),
-    ],
+    plugins: [new AsyncDeployPlugin()],
 };
