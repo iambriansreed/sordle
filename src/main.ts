@@ -311,10 +311,10 @@ const $ = (selector: string, container: ParentNode = document): HTMLElement =>
         setAttempt({ chars: [], index: attempt.index + 1 });
     };
 
-    const handleKey = (key: string) => {
-        const k = key.toLowerCase();
+    const handleKey = (key: keyof typeof $keyboardKeys) => {
+        if (!$keyboardKeys[key]) return;
 
-        if ('backspace' === k) {
+        if ('backspace' === key) {
             if (attempt.chars.length) {
                 attempt.chars.pop();
                 setAttempt(attempt);
@@ -324,24 +324,30 @@ const $ = (selector: string, container: ParentNode = document): HTMLElement =>
             return;
         }
 
-        if ('enter' === k) {
+        if ('enter' === key) {
             handleEnter();
             return;
         }
 
-        if (k.length > 1 || 'abcdefghijklmnopqrstuvwxyz'.indexOf(k) === -1) {
-            return;
+        // a - z
+
+        if (attempt.chars.length === WORD_LENGTH) {
+            // overwrite last character
+            attempt.chars.pop();
         }
 
-        if (attempt.chars.length === WORD_LENGTH) attempt.chars.pop();
-        attempt.chars.push(k);
+        attempt.chars.push(key);
         setAttempt(attempt);
     };
 
     const handleClick = async (e: MouseEvent) => {
+        e.preventDefault();
+
         if (flipping) return;
 
         const targetElement = e.target as HTMLElement;
+
+        targetElement.blur();
 
         if (targetElement.nodeName.toLowerCase() === 'h1') {
             $overlay.innerHTML = modalContent.welcome;
@@ -355,9 +361,7 @@ const $ = (selector: string, container: ParentNode = document): HTMLElement =>
 
         const key = targetElement.dataset.key;
 
-        if (!key) return;
-
-        handleKey(key);
+        if (key) handleKey(key);
     };
 
     $app.addEventListener('click', handleClick);
@@ -366,7 +370,7 @@ const $ = (selector: string, container: ParentNode = document): HTMLElement =>
         $overlay.innerHTML = '';
     });
 
-    window.addEventListener('keyup', (e: KeyboardEvent) => { handleKey(e.key) });
+    window.addEventListener('keyup', (e) => handleKey(e.key.toLowerCase()));
 
     getNewWord();
 })();

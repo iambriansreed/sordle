@@ -6,11 +6,6 @@
     user-select: none;
 }
 
-$orange: #f6a21e;
-$darkOrange: #e55b13;
-$green: #7a871e;
-$darkGreen: #104210;
-
 .none {
     opacity: 0.5;
 }
@@ -26,13 +21,13 @@ button {
 }
 
 .yellow {
-    background-color: $orange;
-    color: white;
+    background-color: orange !important;
+    color: white !important;
 }
 
 .green {
-    background-color: $darkGreen;
-    color: white;
+    background-color: green !important;
+    color: white !important;
 }
 
 .none {
