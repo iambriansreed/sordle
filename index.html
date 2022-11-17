@@ -9,9 +9,18 @@
         <link rel="apple-touch-icon" href="logo192.png" />
         <link rel="manifest" href="manifest.json" />
         <title>Sordle</title>
-        <link media="all" rel="stylesheet" href="main.css?v=0.2.6" />
+        <link media="all" rel="stylesheet" href="main.css?v=0.3.0" />
         <script>
             if (location.protocol !== 'https:') location.protocol = 'https:';
+        </script>
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-RQXNP7YMXR"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() {
+                dataLayer.push(arguments);
+            }
+            gtag('js', new Date());
+            gtag('config', 'G-RQXNP7YMXR');
         </script>
     </head>
     <body>
@@ -65,7 +74,7 @@
             </main>
             <footer>
                 <div>Made with ❤️ by <a href="https://iambrian.com">Brian</a></div>
-                <div class="version">0.2.6</div>
+                <div class="version">0.3.0</div>
             </footer>
             <div class="overlay">
                 <div data-modal="welcome" class="modal welcome">
@@ -135,6 +144,6 @@
                 </div>
             </div>
         </template>
-        <script src="main.js?v=0.2.6"></script>
+        <script src="main.js?v=0.3.0"></script>
     </body>
 </html>
