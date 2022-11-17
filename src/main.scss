@@ -227,39 +227,32 @@ a {
                     transform: scale(0.975);
                 }
 
-                .body {
-                    transform-style: preserve-3d;
-                    transition: 0.707s transform;
+                transform-style: preserve-3d;
+                transition: 0.707s transform;
 
+                .front,
+                .back {
+                    content: '';
+                    backface-visibility: hidden;
                     position: absolute;
                     top: 0;
                     right: 0;
                     bottom: 0;
                     left: 0;
-
-                    .front {
-                        border: solid 2px #ccc;
-                    }
-
-                    .front,
-                    .back {
-                        backface-visibility: hidden;
-                        position: absolute;
-                        top: 0;
-                        right: 0;
-                        bottom: 0;
-                        left: 0;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                    }
-
-                    .back {
-                        transform: rotateX(-180deg);
-                    }
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
                 }
 
-                &.flip .body {
+                .front {
+                    border: solid 2px #ccc;
+                }
+
+                .back {
+                    transform: rotateX(-180deg);
+                }
+
+                &.flip {
                     transform: rotateX(-180deg);
                 }
             }

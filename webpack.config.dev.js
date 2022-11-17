@@ -5,7 +5,10 @@ module.exports = {
     mode: 'development',
     devServer: {
         https: true,
-        liveReload: true,
+        open: ['/'],
+        static: {
+            directory: 'build',
+        },
     },
     ...base,
 };

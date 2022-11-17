@@ -8,5 +8,5 @@
         "allowJs": true,
         "moduleResolution": "node"
     },
-    "include": ["./src/**/*.ts"]
+    "include": ["./src/**/*.ts", "asyncDeployPlugin.ts", "src/tools/asyncDeployPlugin.js"]
 }

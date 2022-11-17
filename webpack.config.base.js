@@ -1,6 +1,7 @@
 const path = require('path');
 const RemovePlugin = require('remove-files-webpack-plugin');
 const CopyPlugin = require('copy-webpack-plugin');
+const AsyncDeployPlugin = require('./asyncDeployPlugin');
 
 module.exports = {
     entry: {
@@ -46,5 +47,6 @@ module.exports = {
         new CopyPlugin({
             patterns: [{ from: 'public', to: '' }],
         }),
+        new AsyncDeployPlugin(),
     ],
 };

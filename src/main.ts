@@ -4,8 +4,6 @@ const MAX_ATTEMPTS = 6;
 
 const WORD_LENGTH = 5;
 
-const CHAR_CARD = `<div class="char"><div class="body"><div class="front"></div><div class="back"></div></div></div>`;
-
 type Word = {
     word: string;
     meanings: {
@@ -22,6 +20,22 @@ type Word = {
         antonyms?: string[] | null;
     }[];
 };
+
+const waitFor = async (ms: number) =>
+    await new Promise<void>((resolve) => {
+        setTimeout(() => {
+            resolve();
+        }, ms);
+    });
+
+const waitForFramePaint = async () =>
+    await new Promise((resolve) => {
+        requestAnimationFrame(() => {
+            const messageChannel = new MessageChannel();
+            messageChannel.port1.onmessage = resolve;
+            messageChannel.port2.postMessage(undefined);
+        });
+    });
 
 function useNotifications() {
     const $notify = $('.notify');
@@ -69,13 +83,6 @@ function useNotifications() {
 //     document.cookie = `__sordle__${str}=${cookieValue}; SameSite=None; Secure`;
 // }
 
-const timeoutPromise = async <T>(ms: number, callback?: () => T): Promise<T> =>
-    await new Promise((resolve) =>
-        setTimeout(() => {
-            resolve(callback?.());
-        }, ms)
-    );
-
 const $$ = (selector: string, container: ParentNode = document): HTMLElement[] =>
     Array.from(container.querySelectorAll<HTMLElement>(selector));
 
@@ -88,25 +95,17 @@ const $ = (selector: string, container: ParentNode = document): HTMLElement =>
     const $main = $('main');
     const mainContent = $('main').innerHTML;
 
-    const modalContent: Record<'welcome' | 'success' | 'fail', string> = {
+    const templates: Record<string, string> = {
         welcome: $overlay.innerHTML,
-        success: $('[data-modal="success"]').innerHTML,
-        fail: $('[data-modal="fail"]').innerHTML,
+        success: $('[data-template="modal-success"]').innerHTML,
+        fail: $('[data-template="modal-fail"]').innerHTML,
     } as const;
 
-    const getJson = async <T>(url: string) => {
-        try {
-            return (
-                window
-                    .fetch(url)
-                    .then((r) => r.json())
-                    .catch(() => null) || null
-            );
-        } catch {
-            // I don't care about 404s
-            return null;
-        }
-    };
+    const getJson = async <T>(url: string) =>
+        window
+            .fetch(url)
+            .then((r) => r.json())
+            .catch(() => null) || null;
 
     const { hideNotify, notify } = useNotifications();
 
@@ -115,7 +114,7 @@ const $ = (selector: string, container: ParentNode = document): HTMLElement =>
     let $attempts: HTMLElement;
     const $keyboardKeys: Record<string, HTMLElement> = {};
 
-    const resetMain = (newWord: string[], newWordMeanings: Word) => {
+    const resetMain = async (newWord: string[], newWordMeanings: Word) => {
         hideNotify();
 
         word = newWord;
@@ -125,7 +124,18 @@ const $ = (selector: string, container: ParentNode = document): HTMLElement =>
 
         $attempts = $('.attempts', $main);
 
-        $attempts.innerHTML = `<div class="attempt">${CHAR_CARD.repeat(WORD_LENGTH)}</div>`.repeat(MAX_ATTEMPTS);
+        let attemptsHtml = '';
+        for (let rowIndex = 0; rowIndex < MAX_ATTEMPTS; rowIndex++) {
+            attemptsHtml += `<div class="attempt">`;
+            for (let charIndex = 0; charIndex < WORD_LENGTH; charIndex++) {
+                attemptsHtml += `<div class="char" id="char-${rowIndex}-${charIndex}"><div class="front"></div><div class="back"></div></div>`;
+            }
+            attemptsHtml += `</div>`;
+        }
+
+        $attempts.innerHTML = attemptsHtml;
+
+        await waitForFramePaint();
 
         setAttempt({ index: 0, chars: [] });
 
@@ -147,30 +157,30 @@ const $ = (selector: string, container: ParentNode = document): HTMLElement =>
         index: 0,
     };
 
-    const setAttempt = (next: typeof attempt) => {
-        attempt = next;
-        const attemptRow = $attempts.childNodes[attempt.index];
-
-        for (let charIndex = 0; charIndex < WORD_LENGTH; charIndex++) {
-            const char = attempt.chars[charIndex];
-            const element = attemptRow.childNodes[charIndex] as HTMLElement;
-            $('.front', element).innerText = char || '';
-            $('.back', element).innerText = char || '';
-        }
+    const setChar = (char: string) => {
+        const $char = $(`#char-${attempt.index}-${attempt.chars.length}`);
+        $('.front', $char).innerText = char || '';
+        $('.back', $char).innerText = char || '';
     };
 
-    const keys: Record<string, 'yellow' | 'green' | 'none'> = {};
+    const setAttempt = (next: typeof attempt) => {
+        attempt = next;
+    };
 
     let flipping = false;
-    const attemptFlip = async (row: HTMLElement, ms = 300) =>
+    const attemptFlip = async (row: HTMLElement, ms = 300) => {
+        flipping = true;
+
         await Promise.all([
-            ...word.map(async (_, i) =>
-                timeoutPromise(i * ms, () => {
-                    (row.childNodes[i] as HTMLElement)!.classList.add('flip');
-                })
-            ),
-            timeoutPromise(ms * (WORD_LENGTH + 2)),
+            ...word.map(async (_, i) => {
+                await waitFor(ms * i);
+                (row.childNodes[i] as HTMLElement)!.classList.add('flip');
+            }),
+            await waitFor(ms * (WORD_LENGTH + 2)),
         ]);
+
+        flipping = false;
+    };
 
     let animateErrorTimeout: ReturnType<typeof setTimeout>;
     const animateError = (error: 'cell' | 'row' = 'cell') => {
@@ -201,8 +211,7 @@ const $ = (selector: string, container: ParentNode = document): HTMLElement =>
         // success
 
         if (tempWordMeanings) {
-            resetMain(tempWord.split(''), tempWordMeanings);
-            return;
+            return resetMain(tempWord.split(''), tempWordMeanings);
         }
 
         // failure - random word not in the dictionary
@@ -213,6 +222,7 @@ const $ = (selector: string, container: ParentNode = document): HTMLElement =>
 
         if (getNewWordCount > 10) {
             notify('Error loading new word', false);
+            return;
         }
 
         getNewWordCount++;
@@ -269,20 +279,23 @@ const $ = (selector: string, container: ParentNode = document): HTMLElement =>
 
         let correct = 0;
 
+        const keys: Record<string, 'yellow' | 'green' | 'none'> = {};
+
+        const $charBack = $$(`.attempt:nth-child(${attempt.index + 1}) .char .back`, $attempts);
+
         attempt.chars.forEach((char, charIndex) => {
             const element = currentAttemptElements[charIndex] as HTMLElement;
 
-            const backElement = element.firstChild.childNodes[1] as HTMLElement;
             if (word[charIndex] === char) {
                 keys[char] = 'green';
-                backElement.classList.add('green');
+                $charBack[charIndex].classList.add('green');
                 correct++;
             } else if (word.includes(char)) {
                 keys[char] = keys[char] || 'yellow';
-                backElement.classList.add('yellow');
+                $charBack[charIndex].classList.add('yellow');
             } else {
                 keys[char] = 'none';
-                backElement.classList.add('none');
+                $charBack[charIndex].classList.add('none');
             }
         });
 
@@ -293,7 +306,7 @@ const $ = (selector: string, container: ParentNode = document): HTMLElement =>
         });
 
         if (correct === WORD_LENGTH) {
-            $overlay.innerHTML = modalContent.success;
+            $overlay.innerHTML = templates.success;
 
             setTimeout(() => {
                 $('[data-attempt-text]', $overlay).innerText = ` ${attempt.index} ${
@@ -303,7 +316,7 @@ const $ = (selector: string, container: ParentNode = document): HTMLElement =>
             loadDefinitions();
             getNewWord();
         } else if (attempt.index + 1 === MAX_ATTEMPTS) {
-            $overlay.innerHTML = modalContent.fail;
+            $overlay.innerHTML = templates.fail;
             loadDefinitions();
             getNewWord();
         }
@@ -312,11 +325,14 @@ const $ = (selector: string, container: ParentNode = document): HTMLElement =>
     };
 
     const handleKey = (key: keyof typeof $keyboardKeys) => {
+        if (flipping) return;
+
         if (!$keyboardKeys[key]) return;
 
         if ('backspace' === key) {
             if (attempt.chars.length) {
                 attempt.chars.pop();
+                setChar('');
                 setAttempt(attempt);
             } else {
                 animateError();
@@ -336,6 +352,7 @@ const $ = (selector: string, container: ParentNode = document): HTMLElement =>
             attempt.chars.pop();
         }
 
+        setChar(key);
         attempt.chars.push(key);
         setAttempt(attempt);
     };
@@ -350,7 +367,7 @@ const $ = (selector: string, container: ParentNode = document): HTMLElement =>
         targetElement.blur();
 
         if (targetElement.nodeName.toLowerCase() === 'h1') {
-            $overlay.innerHTML = modalContent.welcome;
+            $overlay.innerHTML = templates.welcome;
             return;
         }
 

@@ -1,11 +1,11 @@
 {
     "name": "sordle",
-    "version": "0.3.0",
+    "version": "0.4.0",
     "private": true,
     "scripts": {
         "prod": "http-server build -S -C ../cert.pem -K ../key.pem -o",
         "start": "webpack serve -c webpack.config.dev.js",
-        "predeploy": "webpack -c webpack.config.prod.js && ts-node tools/deploy.ts",
+        "predeploy": "webpack -c webpack.config.prod.js",
         "deploy": "gh-pages -d build"
     },
     "devDependencies": {
