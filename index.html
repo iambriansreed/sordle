@@ -4,16 +4,16 @@
         <meta charset="utf-8" />
         <link rel="icon" href="favicon.ico" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="theme-color" content="#000000" />
+        <meta name="theme-color" content="#333" />
         <meta name="description" content="Sort of like Wordle" />
-        <link rel="apple-touch-icon" href="logo192.png" />
+        <link rel="apple-touch-icon" href="192.png" />
         <link rel="manifest" href="manifest.json" />
         <title>Sordle</title>
-        <link media="all" rel="stylesheet" href="main.css?v=0.4.1" />
+        <link media="all" rel="stylesheet" href="main.css?v=0.4.5" />
         <script>
             if (location.protocol !== 'https:') location.protocol = 'https:';
         </script>
-        <script async src="https://www.googletagmanager.com/gtag/js?id=G-RQXNP7YMXR"></script>
+        <script defer async src="https://www.googletagmanager.com/gtag/js?id=G-RQXNP7YMXR"></script>
         <script>
             window.dataLayer = window.dataLayer || [];
             function gtag() {
@@ -25,8 +25,8 @@
     </head>
     <body>
         <noscript>You need to enable JavaScript to run this app.</noscript>
-        <div class="app">
-            <h1>S<em class="loader">o</em>rdle</h1>
+        <div class="app loading">
+            <h1>S<span class="loader">o</span>rdle</h1>
             <main>
                 <div class="attempts">
                     <div class="attempt">
@@ -206,49 +206,58 @@
                 </div>
             </main>
             <footer>
-                <div>Made with ❤️ by <a href="https://iambrian.com">Brian</a></div>
-                <div class="version">0.4.1</div>
-            </footer>
-            <div class="overlay">
-                <div data-modal="welcome" class="modal welcome">
-                    <div class="body">
-                        <h2>Welcome to Sordle</h2>
-                        <p class="subtitle"><em>Sort</em> of like Wordle</p>
-                        <p>
-                            You can play this as many times as you want on the same day as long as the free APIs we use
-                            don't limit requests.
-                        </p>
-                        <p>This site uses Google Analytics and may use other cookies. Usage is consent.</p>
-                        <p>
-                            Thanks to the Random Word API:
-                            <br /><a target="_blank" href="https://random-word-api.herokuapp.com"
-                                >https://random-word-api.herokuapp.com</a
-                            >
-                        </p>
-                        <p>
-                            Thanks to the Free Dictionary API:
-                            <br /><a target="_blank" href="https://dictionaryapi.dev">https://dictionaryapi.dev</a>
-                        </p>
-
-                        <p>
-                            If you want to contribute or donate go visit the sites above as they have to pay for server
-                            costs. If you want to add statistics like the real Wordle app submit a pull request.
-                        </p>
-
-                        <p>
-                            The real Wordle app can be found here:
-                            <a href="https://www.nytimes.com/games/wordle" target="_blank"
-                                >https://www.nytimes.com/games/wordle</a
-                            >.
-                        </p>
-                    </div>
-                    <div class="footer">
-                        <button type="button" data-action="closeModal">Start</button>
-                    </div>
+                <div>
+                    Made with
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+                        <path
+                            d="M47.6 300.4L228.3 469.1c7.5 7 17.4 10.9 27.7 10.9s20.2-3.9 27.7-10.9L464.4 300.4c30.4-28.3 47.6-68 47.6-109.5v-5.8c0-69.9-50.5-129.5-119.4-141C347 36.5 300.6 51.4 268 84L256 96 244 84c-32.6-32.6-79-47.5-124.6-39.9C50.5 55.6 0 115.2 0 185.1v5.8c0 41.5 17.2 81.2 47.6 109.5z"
+                        />
+                    </svg>
+                    by <a href="https://iambrian.com">Brian</a>
                 </div>
-            </div>
+                <div class="version">0.4.5</div>
+            </footer>
+            <div class="overlay"></div>
         </div>
         <div class="notify"></div>
+        <template data-template="modal-welcome">
+            <div class="modal welcome">
+                <div class="body">
+                    <h2>Welcome to Sordle</h2>
+                    <p class="subtitle"><em>Sort</em> of like Wordle</p>
+                    <p>
+                        You can play this as many times as you want on the same day as long as the free APIs we use
+                        don't limit requests.
+                    </p>
+                    <p>This site uses Google Analytics and may use other cookies. Usage is consent.</p>
+                    <p>
+                        Thanks to the Random Word API:
+                        <br /><a target="_blank" href="https://random-word-api.herokuapp.com"
+                            >https://random-word-api.herokuapp.com</a
+                        >
+                    </p>
+                    <p>
+                        Thanks to the Free Dictionary API:
+                        <br /><a target="_blank" href="https://dictionaryapi.dev">https://dictionaryapi.dev</a>
+                    </p>
+
+                    <p>
+                        If you want to contribute or donate go visit the sites above as they have to pay for server
+                        costs. If you want to add statistics like the real Wordle app submit a pull request.
+                    </p>
+
+                    <p>
+                        The real Wordle app can be found here:
+                        <a href="https://www.nytimes.com/games/wordle" target="_blank"
+                            >https://www.nytimes.com/games/wordle</a
+                        >.
+                    </p>
+                </div>
+                <div class="footer">
+                    <button type="button" data-action="closeModal">Start</button>
+                </div>
+            </div>
+        </template>
         <template data-template="modal-success">
             <div class="modal">
                 <div class="body">
@@ -277,6 +286,6 @@
                 </div>
             </div>
         </template>
-        <script src="main.js?v=0.4.1"></script>
+        <script src="main.js?v=0.4.5"></script>
     </body>
 </html>
