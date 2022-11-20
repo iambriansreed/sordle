@@ -101,11 +101,34 @@ const $ = (selector: string, container: ParentNode = document): HTMLElement =>
         fail: $('[data-template="modal-fail"]').innerHTML,
     } as const;
 
-    const getJson = async <T>(url: string) =>
-        window
-            .fetch(url)
-            .then((r) => r.json())
-            .catch(() => null) || null;
+    let loadingInterval: ReturnType<typeof setInterval>;
+    let isLoading = false;
+    const setLoading = (loading: boolean) => {
+        if (loading === isLoading) return;
+        isLoading = loading;
+        if (loading) $app.classList.add('loading');
+        loadingInterval = setTimeout(() => {
+            if (!isLoading) {
+                $app.classList.remove('loading');
+                return;
+            }
+            setLoading(true);
+        }, 2000);
+    };
+
+    const getJson = async <T>(url: string) => {
+        setLoading(true);
+        return (
+            window
+                .fetch(url)
+                .then((r) => r.json())
+                .then(async (response) => {
+                    setLoading(false);
+                    return response;
+                })
+                .catch(() => null) || null
+        );
+    };
 
     const { hideNotify, notify } = useNotifications();
 
@@ -113,6 +136,7 @@ const $ = (selector: string, container: ParentNode = document): HTMLElement =>
     let word: string[] = [];
     let $attempts: HTMLElement;
     const $keyboardKeys: Record<string, HTMLElement> = {};
+    let $chars = () => $$(`main .attempt:nth-child(${attempt.index + 1}) .char`);
 
     const resetMain = async (newWord: string[], newWordMeanings: Word) => {
         hideNotify();
@@ -168,14 +192,15 @@ const $ = (selector: string, container: ParentNode = document): HTMLElement =>
     };
 
     let flipping = false;
-    const attemptFlip = async (row: HTMLElement, ms = 300) => {
+    const attemptFlip = async (ms = 300) => {
         flipping = true;
 
         await Promise.all([
-            ...word.map(async (_, i) => {
+            ...$chars().map(async ($element, i) => {
                 await waitFor(ms * i);
-                (row.childNodes[i] as HTMLElement)!.classList.add('flip');
+                $element!.classList.add('flip');
             }),
+
             await waitFor(ms * (WORD_LENGTH + 2)),
         ]);
 
@@ -186,10 +211,11 @@ const $ = (selector: string, container: ParentNode = document): HTMLElement =>
     const animateError = (error: 'cell' | 'row' = 'cell') => {
         if (animateErrorTimeout) clearTimeout(animateErrorTimeout);
 
-        let errorElements = [$attempts.childNodes[attempt.index]?.childNodes[attempt.chars.length] as HTMLElement];
+        let errorElements = $chars();
 
-        if (error === 'row')
-            errorElements = Array.from($attempts.childNodes[attempt.index]?.childNodes as NodeListOf<HTMLElement>);
+        if (error !== 'row') {
+            errorElements = [errorElements[0]];
+        }
 
         errorElements.forEach((element) => element.classList.add('horizontal-shake'));
 
@@ -273,33 +299,26 @@ const $ = (selector: string, container: ParentNode = document): HTMLElement =>
             return;
         }
 
-        const currentAttemptRow = $attempts.childNodes[attempt.index] as HTMLElement;
-
-        const currentAttemptElements = currentAttemptRow.childNodes;
-
         let correct = 0;
 
         const keys: Record<string, 'yellow' | 'green' | 'none'> = {};
 
-        const $charBack = $$(`.attempt:nth-child(${attempt.index + 1}) .char .back`, $attempts);
+        const charElements = $chars();
 
         attempt.chars.forEach((char, charIndex) => {
-            const element = currentAttemptElements[charIndex] as HTMLElement;
-
             if (word[charIndex] === char) {
                 keys[char] = 'green';
-                $charBack[charIndex].classList.add('green');
+                charElements[charIndex].classList.add('green');
                 correct++;
             } else if (word.includes(char)) {
                 keys[char] = keys[char] || 'yellow';
-                $charBack[charIndex].classList.add('yellow');
+                charElements[charIndex].classList.add('yellow');
             } else {
-                keys[char] = 'none';
-                $charBack[charIndex].classList.add('none');
+                keys[char] = keys[char] || 'none';
             }
         });
 
-        await attemptFlip(currentAttemptRow);
+        await attemptFlip();
 
         Object.entries(keys).forEach(([char, color]) => {
             $keyboardKeys[char].classList.add(color);
