@@ -96,10 +96,12 @@ const $ = (selector: string, container: ParentNode = document): HTMLElement =>
     const mainContent = $('main').innerHTML;
 
     const templates: Record<string, string> = {
-        welcome: $overlay.innerHTML,
+        welcome: $('[data-template="modal-welcome"]').innerHTML,
         success: $('[data-template="modal-success"]').innerHTML,
         fail: $('[data-template="modal-fail"]').innerHTML,
     } as const;
+
+    $overlay.innerHTML = templates.welcome;
 
     let loadingInterval: ReturnType<typeof setInterval>;
     let isLoading = false;
