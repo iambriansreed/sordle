@@ -80,6 +80,9 @@ a {
     height: 100%;
     overflow: hidden;
     max-width: 412px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 
     h1 {
         text-align: center;
@@ -123,6 +126,11 @@ a {
             transform: scale(1, 1) translateY(0);
         }
     }
+
+    main {
+        display: contents;
+    }
+
     .overlay {
         z-index: 1000;
         position: fixed;
@@ -305,6 +313,7 @@ a {
         flex-direction: column;
         max-width: 500px;
         margin: 0.25rem auto 0;
+        width: 100%;
 
         > div {
             display: flex;
@@ -411,7 +420,7 @@ a {
 }
 
 footer {
-    margin: 0.5rem 1rem 0;
+    margin: 0.5rem 1rem 0.5rem;
     display: flex;
     flex-direction: row;
     justify-content: space-between;
@@ -428,5 +437,43 @@ footer {
         height: 1rem;
         margin: 0 0.125rem;
         vertical-align: text-top;
+    }
+}
+
+.landscape-only {
+    height: 100%;
+    flex-direction: column;
+    justify-content: center;
+    justify-items: center;
+    text-align: center;
+    color: $gray-500;
+    display: none;
+
+    h1 {
+        margin: 0;
+        span {
+            color: white;
+            display: inline-block;
+            transition: all 3s;
+            transform: scale(1, 1) translateY(0);
+        }
+    }
+    p {
+        margin: 1rem 0 1.5rem;
+    }
+
+    svg {
+        fill: $gray-500;
+        width: 5rem;
+        margin: 0 auto;
+    }
+}
+
+@media (orientation: landscape) {
+    .app {
+        display: none !important;
+    }
+    .landscape-only {
+        display: flex;
     }
 }
