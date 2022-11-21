@@ -469,7 +469,7 @@ footer {
     }
 }
 
-@media (orientation: landscape) {
+@media (orientation: landscape) and (hover: none) and (pointer: coarse) {
     .app {
         display: none !important;
     }
