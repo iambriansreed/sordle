@@ -21,7 +21,7 @@ class AsyncDeployPlugin {
 
                 fs.writeFileSync(
                     buildRoot + 'index.html',
-                    replacements.reduce((finalHtml, replacement) => finalHtml.replace(...replacement), indexHtml)
+                    replacements.reduce((content, replacement) => content.replace(...replacement), indexHtml)
                 );
 
                 fs.rmSync(buildRoot + 'template.html');
