@@ -14,11 +14,10 @@ class AsyncDeployPlugin {
 
                 const pkg = JSON.parse(fs.readFileSync('./package.json', 'utf-8'));
 
-                const version = pkg.version + '.' + new Date().getTime();
-
                 const replacements = [
                     // version
-                    [new RegExp('%version%', 'g'), version],
+                    [new RegExp('%version%', 'g'), pkg.version + '.' + new Date().getTime()],
+                    [new RegExp('%versionShort%', 'g'), pkg.version],
                 ];
 
                 fs.writeFileSync(
