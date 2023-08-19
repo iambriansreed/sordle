@@ -46,13 +46,13 @@ export const useWords = <T>(setLoading: (loading: boolean) => void) => {
     const words: string[] = [];
 
     const loadWords = () =>
-        getText('https://iambrian.com/words-sordle/5-letter-words.txt').then((w) => {
+        getText('https://iambrian.com/sordle-words/5-letter-words.txt').then((w) => {
             words.push(...w.split('\n'));
         });
 
     const getRandomWord = async (): Promise<Word> => {
         const word = words[randomNumber(0, 7435)];
-        const response: Word[] = await getJson('https://iambrian.com/words-sordle/5-letter-words/' + word + '.json');
+        const response: Word[] = await getJson('https://iambrian.com/sordle-words/5-letter-words/' + word + '.json');
         return response[0];
     };
 
