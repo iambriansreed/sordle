@@ -1,4 +1,4 @@
-const cacheName = 'sordle^0.5.8.1669476487595';
+const cacheName = 'sordle^0.5.8.1692480083866';
 const assets = ['/', '/index.html', '/main.css', '/main.js'];
 
 self.addEventListener('install', (installEvent) => {
