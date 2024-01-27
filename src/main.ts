@@ -26,6 +26,8 @@ const WORD_LENGTH = 5;
         isLoading = loading;
         if (loading) $app.classList.add('loading');
 
+        if (loadingInterval) clearInterval(loadingInterval);
+
         loadingInterval = setTimeout(() => {
             if (!isLoading) {
                 $app.classList.remove('loading');
@@ -74,7 +76,7 @@ const WORD_LENGTH = 5;
 
         setTimeout(() => {
             $$('[data-key]', $main).forEach((element) => {
-                $keyboardKeys[element.dataset.key] = element;
+                if (element.dataset.key) $keyboardKeys[element.dataset.key] = element;
             });
         }, 10);
     };
@@ -145,7 +147,7 @@ const WORD_LENGTH = 5;
         <p class="part-of-speech"><span>${meaning.partOfSpeech}</span></p>
         <ol>
             ${meaning.definitions
-                .map(
+                ?.map(
                     (definition) => `
             <li>
                 <p>${definition.definition}</p>
@@ -294,7 +296,7 @@ if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker
             .register('/serviceWorker.js')
-            .then((res) => console.log('service worker registered'))
-            .catch((err) => console.log('service worker not registered', err));
+            .then(() => console.info('service worker registered'))
+            .catch((err) => console.info('service worker not registered', err));
     });
 }

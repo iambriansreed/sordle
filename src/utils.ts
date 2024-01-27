@@ -1,11 +1,17 @@
-export const $$ = (selector: string, container: ParentNode = document): HTMLElement[] =>
-    Array.from(container.querySelectorAll<HTMLElement>(selector));
+export const $$ = (selector: string, container: ParentNode = document): HTMLElement[] => {
+    const elements = Array.from(container.querySelectorAll<HTMLElement>(selector));
+    if (!elements) throw new Error(`Element not found: ${selector}`);
+    return elements;
+};
 
-export const $ = (selector: string, container: ParentNode = document): HTMLElement =>
-    container.querySelector<HTMLElement>(selector);
+export const $ = (selector: string, container: ParentNode = document): HTMLElement => {
+    const element = container?.querySelector<HTMLElement>(selector);
+    if (!element) throw new Error(`Element not found: ${selector}`);
+    return element;
+};
 
-export const useFetch = <T>(setLoading: (loading: boolean) => void) => {
-    const getText = async <T>(url: string) => {
+export const useFetch = (setLoading: (loading: boolean) => void) => {
+    const getText = async (url: string) => {
         setLoading(true);
         return (
             window
@@ -19,7 +25,7 @@ export const useFetch = <T>(setLoading: (loading: boolean) => void) => {
         );
     };
 
-    const getJson = async <T>(url: string) => {
+    const getJson = async (url: string) => {
         setLoading(true);
         return (
             window
@@ -36,23 +42,23 @@ export const useFetch = <T>(setLoading: (loading: boolean) => void) => {
     return { getJson, getText };
 };
 
-const WORD_COUNT = 7435;
-
 export const randomNumber = (min: number, max: number) => Math.floor(Math.random() * (max - min) + min);
 
-export const useWords = <T>(setLoading: (loading: boolean) => void) => {
+export const useWords = (setLoading: (loading: boolean) => void) => {
     const { getText, getJson } = useFetch(setLoading);
 
     const words: string[] = [];
 
-    const loadWords = () =>
-        getText('https://iambrian.com/sordle-words/5-letter-words.txt').then((w) => {
-            words.push(...w.split('\n'));
-        });
+    const loadWords = async () => {
+        const word = await getText('https://iambrian.com/sordle-words/5-letter-words.txt');
+        if (word) words.push(...word.split('\n'));
+    };
 
     const getRandomWord = async (): Promise<Word> => {
         const word = words[randomNumber(0, 7435)];
-        const response: Word[] = await getJson('https://iambrian.com/sordle-words/5-letter-words/' + word + '.json');
+        const response: Word[] = await getJson(
+            'https://iambrian.com/sordle-words/5-letter-words/' + word + '.json'
+        );
         return response[0];
     };
 
@@ -82,7 +88,7 @@ export const waitForFramePaint = async () =>
     });
 
 export function useNotifications() {
-    const $notify = $('.notify');
+    const $notify = $('.notify')!;
 
     let showHelperTimeout: ReturnType<typeof setTimeout>;
 

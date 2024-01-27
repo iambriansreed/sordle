@@ -9,10 +9,6 @@
         <link rel="apple-touch-icon" href="192.png" />
         <link rel="manifest" href="manifest.json" />
         <title>Sordle</title>
-        <link media="all" rel="stylesheet" href="main.css#%version%" />
-        <script>
-            if (location.protocol !== 'https:') location.protocol = 'https:';
-        </script>
         <script defer async src="https://www.googletagmanager.com/gtag/js?id=G-RQXNP7YMXR"></script>
         <script>
             window.dataLayer = window.dataLayer || [];
@@ -216,7 +212,7 @@
                     </svg>
                     by <a href="https://iambrian.com">Brian</a>
                 </div>
-                <div class="version">%versionShort%</div>
+                <div class="version">0.6.0</div>
             </footer>
             <div class="overlay"></div>
         </div>
@@ -230,7 +226,9 @@
 
                     <p>
                         Thanks to the English-language Wiktionary:
-                        <br /><a target="_blank" href="https://donate.wikimedia.org/">https://donate.wikimedia.org/</a>
+                        <br /><a target="_blank" href="https://donate.wikimedia.org/"
+                            >https://donate.wikimedia.org/</a
+                        >
                     </p>
 
                     <p>
@@ -295,6 +293,6 @@
                 />
             </svg>
         </div>
-        <script src="main.js?v=%version%"></script>
+        <script type="module" src="/src/main.ts"></script>
     </body>
 </html>
