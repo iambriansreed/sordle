@@ -4,7 +4,7 @@ import { useWords, $, $$, useNotifications, waitFor, waitForFramePaint } from '.
 const MAX_ATTEMPTS = 6;
 const WORD_LENGTH = 5;
 
-(async () => {
+function app() {
     const $app = $('.app');
     const $overlay = $('.overlay');
     const $main = $('main');
@@ -290,13 +290,27 @@ const WORD_LENGTH = 5;
     });
 
     window.addEventListener('keyup', (e) => handleKey(e.key.toLowerCase()));
-})();
-
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker
-            .register('/serviceWorker.js')
-            .then(() => console.info('service worker registered'))
-            .catch((err) => console.info('service worker not registered', err));
-    });
 }
+
+app();
+
+const registerServiceWorker = async () => {
+    if ('serviceWorker' in navigator) {
+        try {
+            const registration = await navigator.serviceWorker.register('/sw.js', {
+                scope: '/',
+            });
+            if (registration.installing) {
+                console.info('Service worker installing');
+            } else if (registration.waiting) {
+                console.info('Service worker installed');
+            } else if (registration.active) {
+                console.info('Service worker active');
+            }
+        } catch (error) {
+            console.error(`Registration failed with ${error}`);
+        }
+    }
+};
+
+registerServiceWorker();
