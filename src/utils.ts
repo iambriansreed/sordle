@@ -50,15 +50,17 @@ export const useWords = (setLoading: (loading: boolean) => void) => {
     const words: string[] = [];
 
     const loadWords = async () => {
-        const word = await getText('https://iambrian.com/sordle-words/5-letter-words.txt');
-        if (word) words.push(...word.split('\n'));
+        let wordList = localStorage.getItem('sordle:words');
+        if (!wordList) {
+            wordList = await getText('https://iambrian.com/sordle-words/5-letter-words.txt');
+            wordList && localStorage.setItem('sordle:words', wordList);
+        }
+        if (wordList) words.push(...wordList.split('\n'));
     };
 
     const getRandomWord = async (): Promise<Word> => {
-        const word = words[randomNumber(0, 7435)];
-        const response: Word[] = await getJson(
-            'https://iambrian.com/sordle-words/5-letter-words/' + word + '.json'
-        );
+        const word = words[randomNumber(0, words.length - 1)];
+        const response: Word[] = await getJson('https://iambrian.com/sordle-words/5-letter-words/' + word + '.json');
         return response[0];
     };
 
