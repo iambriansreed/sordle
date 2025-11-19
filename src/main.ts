@@ -185,15 +185,15 @@ function app() {
         const charElements = $chars();
 
         attempt.chars.forEach((char, charIndex) => {
-            if (word[charIndex] === char) {
-                keys[char] = 'green';
-                charElements[charIndex].classList.add('green');
+            charElements[charIndex].classList.remove('green', 'yellow', 'none');
+
+            const charColor = getCharacterColor(char, charIndex, word, attempt.chars);
+
+            keys[char] = charColor;
+            charElements[charIndex].classList.add(charColor);
+
+            if (charColor === 'green') {
                 correct++;
-            } else if (word.includes(char)) {
-                keys[char] = keys[char] || 'yellow';
-                charElements[charIndex].classList.add('yellow');
-            } else {
-                keys[char] = keys[char] || 'none';
             }
         });
 
@@ -290,6 +290,45 @@ function app() {
     });
 
     window.addEventListener('keyup', (e) => handleKey(e.key.toLowerCase()));
+}
+
+function getCharacterColor(
+    char: string,
+    charIndex: number,
+    solutionChars: string[],
+    attemptChars: string[]
+): 'green' | 'yellow' | 'none' {
+    if (solutionChars[charIndex] === char) return 'green';
+
+    if (solutionChars.includes(char)) {
+        const solutionCharCounts: Record<string, number> = {};
+        for (let i = 0; i < solutionChars.length; i++) {
+            const c = solutionChars[i];
+            solutionCharCounts[c] = (solutionCharCounts[c] || 0) + 1;
+        }
+
+        // Remove green (exact) matches from available solution counts
+        for (let i = 0; i < attemptChars.length; i++) {
+            if (solutionChars[i] === attemptChars[i]) {
+                solutionCharCounts[attemptChars[i]] = (solutionCharCounts[attemptChars[i]] || 1) - 1;
+            }
+        }
+
+        // Count how many times this character has been used in the attempt up to (and including) this position,
+        // but only count positions that were not already green matches.
+        const attemptCharCounts: Record<string, number> = {};
+        for (let i = 0; i <= charIndex; i++) {
+            if (solutionChars[i] === attemptChars[i]) continue; // skip greens
+            const ac = attemptChars[i];
+            attemptCharCounts[ac] = (attemptCharCounts[ac] || 0) + 1;
+        }
+
+        if (attemptCharCounts[char] <= (solutionCharCounts[char] || 0)) {
+            return 'yellow';
+        }
+    }
+
+    return 'none';
 }
 
 app();
