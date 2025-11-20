@@ -12,10 +12,14 @@ fs.writeFileSync('package.json', packageJson.replace(version, nextVersion));
 function onFile(dir, cb) {
     fs.readdirSync(dir, { withFileTypes: true }).map((dirEnt) => {
         const res = path.resolve(dir, dirEnt.name);
-        dirEnt.isDirectory() ? onFile(res, cb) : cb(res);
+        if (dirEnt.isDirectory()) {
+            onFile(res, cb);
+        } else {
+            cb(res);
+        }
     });
 }
 
 onFile('dist', (filePath) =>
-    fs.writeFileSync(filePath, fs.readFileSync(filePath, 'utf8').replace(/%version%/g, nextVersion))
+    fs.writeFileSync(filePath, fs.readFileSync(filePath, 'utf8').replace(/%version%/g, nextVersion)),
 );

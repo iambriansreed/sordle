@@ -5,12 +5,12 @@ type Word = {
         definitions?:
             | {
                   definition: string;
-                  synonyms?: null[] | null;
-                  antonyms?: null[] | null;
+                  synonyms?: null | null[];
+                  antonyms?: null | null[];
                   example: string;
               }[]
             | null;
-        synonyms?: null[] | null;
-        antonyms?: string[] | null;
+        synonyms?: null | null[];
+        antonyms?: null | string[];
     }[];
 };

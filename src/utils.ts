@@ -53,7 +53,7 @@ export const useWords = (setLoading: (loading: boolean) => void) => {
         let wordList = localStorage.getItem('sordle:words');
         if (!wordList) {
             wordList = await getText('https://iambrian.com/sordle-words/5-letter-words.txt');
-            wordList && localStorage.setItem('sordle:words', wordList);
+            if (wordList) localStorage.setItem('sordle:words', wordList);
         }
         if (wordList) words.push(...wordList.split('\n'));
     };
@@ -90,7 +90,7 @@ export const waitForFramePaint = async () =>
     });
 
 export function useNotifications() {
-    const $notify = $('.notify')!;
+    const $notify = $('.notify');
 
     let showHelperTimeout: ReturnType<typeof setTimeout>;
 

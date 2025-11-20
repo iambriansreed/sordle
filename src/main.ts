@@ -4,6 +4,8 @@ import { useWords, $, $$, useNotifications, waitFor, waitForFramePaint } from '.
 const MAX_ATTEMPTS = 6;
 const WORD_LENGTH = 5;
 
+type Status = 'green' | 'none' | 'yellow';
+
 function app() {
     const $app = $('.app');
     const $overlay = $('.overlay');
@@ -47,7 +49,7 @@ function app() {
     let word: string[] = [];
     let $attempts: HTMLElement;
     const $keyboardKeys: Record<string, HTMLElement> = {};
-    let $chars = () => $$(`main .attempt:nth-child(${attempt.index + 1}) .char`);
+    const $chars = () => $$(`main .attempt:nth-child(${attempt.index + 1}) .char`);
 
     const resetMain = async (newWord: string[], newWordMeanings: Word) => {
         hideNotify();
@@ -103,7 +105,7 @@ function app() {
         await Promise.all([
             ...$chars().map(async ($element, i) => {
                 await waitFor(ms * i);
-                $element!.classList.add('flip');
+                $element.classList.add('flip');
             }),
 
             await waitFor(ms * (WORD_LENGTH + 2)),
@@ -152,11 +154,11 @@ function app() {
             <li>
                 <p>${definition.definition}</p>
                 ${definition.example ? `<p class="example">"${definition.example}"</p>` : ''}
-            </li>`
+            </li>`,
                 )
                 .join('')}
         </ol>
-    </li>`
+    </li>`,
         )
         .join('')}
 </ul>`;
@@ -180,7 +182,7 @@ function app() {
 
         let correct = 0;
 
-        const keys: Record<string, 'yellow' | 'green' | 'none'> = {};
+        const keys: Record<string, Status> = {};
 
         const charElements = $chars();
 
@@ -189,12 +191,11 @@ function app() {
 
             const charColor = getCharacterColor(char, charIndex, word, attempt.chars);
 
-            keys[char] = charColor;
+            keys[char] = getKeyboardKeyColor(keys[char], charColor);
+
             charElements[charIndex].classList.add(charColor);
 
-            if (charColor === 'green') {
-                correct++;
-            }
+            if (charColor === 'green') correct++;
         });
 
         await attemptFlip();
@@ -292,12 +293,17 @@ function app() {
     window.addEventListener('keyup', (e) => handleKey(e.key.toLowerCase()));
 }
 
-function getCharacterColor(
-    char: string,
-    charIndex: number,
-    solutionChars: string[],
-    attemptChars: string[]
-): 'green' | 'yellow' | 'none' {
+const STATUS_PRIORITY: Record<Status, number> = {
+    none: 0,
+    yellow: 1,
+    green: 2,
+};
+
+function getKeyboardKeyColor(prev: Status | undefined, next: Status): Status {
+    return !prev || STATUS_PRIORITY[next] > STATUS_PRIORITY[prev] ? next : prev;
+}
+
+function getCharacterColor(char: string, charIndex: number, solutionChars: string[], attemptChars: string[]): Status {
     if (solutionChars[charIndex] === char) return 'green';
 
     if (solutionChars.includes(char)) {
