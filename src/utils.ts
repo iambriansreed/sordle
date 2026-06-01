@@ -58,10 +58,14 @@ export const useWords = (setLoading: (loading: boolean) => void) => {
         if (wordList) words.push(...wordList.split('\n'));
     };
 
-    const getRandomWord = async (): Promise<Word> => {
-        const word = words[randomNumber(0, words.length - 1)];
+    const getWord = async (word: string): Promise<Word> => {
         const response: Word[] = await getJson('https://iambrian.com/sordle-words/5-letter-words/' + word + '.json');
         return response[0];
+    };
+
+    const getRandomWord = async (): Promise<Word> => {
+        const word = words[randomNumber(0, words.length - 1)];
+        return getWord(word);
     };
 
     const checkWord = (w: string) => words.includes(w);
@@ -69,6 +73,7 @@ export const useWords = (setLoading: (loading: boolean) => void) => {
     return {
         loadWords,
         getRandomWord,
+        getWord,
         checkWord,
     };
 };
@@ -95,19 +100,19 @@ export function useNotifications() {
     let showHelperTimeout: ReturnType<typeof setTimeout>;
 
     const hideNotify = () => {
-        $notify.style.opacity = '0';
+        $notify.classList.remove('show');
         showHelperTimeout = setTimeout(() => {
             $notify.innerHTML = '';
-        }, 200);
+        }, 220);
     };
 
     const notify = (str: string, autoClose = true) => {
         if (showHelperTimeout) clearTimeout(showHelperTimeout);
         $notify.innerHTML = str;
 
-        setTimeout(() => {
-            $notify.style.opacity = '1';
-        }, 1);
+        requestAnimationFrame(() => {
+            $notify.classList.add('show');
+        });
 
         if (autoClose)
             showHelperTimeout = setTimeout(() => {

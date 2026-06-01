@@ -1,14 +1,27 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="en" class="app-loading">
     <head>
         <meta charset="utf-8" />
+        <style>
+            /* Hide everything until the stylesheet is applied (avoids a flash of unstyled
+               content). JS removes .app-loading once styles are in. */
+            .app-loading body {
+                visibility: hidden;
+            }
+        </style>
         <link rel="icon" href="favicon.ico" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#333" />
         <meta name="description" content="Sort of like Wordle" />
+        <meta property="og:title" content="Sordle" />
+        <meta property="og:description" content="Unlimited Wordle-style plays with a fun wiki-powered twist." />
+        <meta property="og:image" content="/thumbnail.svg" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:image" content="/thumbnail.svg" />
         <link rel="apple-touch-icon" href="192.png" />
         <link rel="manifest" href="manifest.json" />
         <title>Sordle</title>
+        <script src="https://js.hcaptcha.com/1/api.js" async defer></script>
         <script async src="https://www.googletagmanager.com/gtag/js?id=G-RQXNP7YMXR"></script>
         <script>
             window.dataLayer = window.dataLayer || [];
@@ -22,6 +35,9 @@
     <body>
         <noscript>You need to enable JavaScript to run this app.</noscript>
         <div class="app loading">
+            <svg class="progress" data-progress viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                <rect pathLength="100" x="0" y="0" width="100" height="100" />
+            </svg>
             <h1>S<span class="loader">o</span>rdle</h1>
             <main>
                 <div class="attempts">
@@ -183,7 +199,6 @@
                         <button type="button" data-key="l">l</button>
                     </div>
                     <div>
-                        <button type="button" class="lg" data-key="enter">enter</button>
                         <button type="button" data-key="z">z</button>
                         <button type="button" data-key="x">x</button>
                         <button type="button" data-key="c">c</button>
@@ -199,52 +214,114 @@
                             </svg>
                         </button>
                     </div>
+                    <div class="enter-row">
+                        <button type="button" data-key="enter">enter</button>
+                    </div>
                 </div>
             </main>
 
             <footer>
                 <div>
-                    <span>Made with</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="11" height="11">
                         <path
                             d="M47.6 300.4L228.3 469.1c7.5 7 17.4 10.9 27.7 10.9s20.2-3.9 27.7-10.9L464.4 300.4c30.4-28.3 47.6-68 47.6-109.5v-5.8c0-69.9-50.5-129.5-119.4-141C347 36.5 300.6 51.4 268 84L256 96 244 84c-32.6-32.6-79-47.5-124.6-39.9C50.5 55.6 0 115.2 0 185.1v5.8c0 41.5 17.2 81.2 47.6 109.5z"
                         />
                     </svg>
-                    <span>by <a href="https://iambrian.com">Brian</a></span>
+                    <a href="https://iambrian.com">Brian</a>
                 </div>
+                <button type="button" class="give-up" data-action="giveUp">
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
+                    >
+                        <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
+                        <line x1="4" y1="22" x2="4" y2="15" />
+                    </svg>
+                    Give up
+                </button>
+                <button
+                    type="button"
+                    class="theme-toggle"
+                    data-action="toggleTheme"
+                    aria-label="Toggle dark and light mode"
+                >
+                    <svg
+                        class="icon-sun"
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
+                    >
+                        <circle cx="12" cy="12" r="5" />
+                        <line x1="12" y1="1" x2="12" y2="3" />
+                        <line x1="12" y1="21" x2="12" y2="23" />
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                        <line x1="1" y1="12" x2="3" y2="12" />
+                        <line x1="21" y1="12" x2="23" y2="12" />
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                    </svg>
+                    <svg
+                        class="icon-moon"
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
+                    >
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                    </svg>
+                </button>
                 <div class="version">%version%</div>
             </footer>
             <div class="overlay"></div>
+            <div class="intro" data-intro>
+                <section class="intro-slide intro-title">
+                    <h1 class="intro-logo">S<span>o</span>rdle</h1>
+                    <p class="intro-tagline">Unlimited plays. Quick wordplay. Instant feedback.</p>
+                </section>
+            </div>
         </div>
         <div class="notify"></div>
         <template data-template="modal-welcome">
             <div class="modal welcome">
                 <div class="body">
-                    <h2>Welcome to Sordle</h2>
-                    <p class="subtitle"><em>Sort</em> of like Wordle</p>
-                    <p>Unlike Wordle you can play this as many times as you want in a day.</p>
+                    <div class="welcome-hero">
+                        <h2 class="welcome-logo">S<span>o</span>rdle</h2>
+                        <p class="welcome-tagline"><em>Sort</em> of like Wordle — play as many times as you like.</p>
+                    </div>
 
-                    <p>
-                        Thanks to the English-language Wiktionary:
-                        <br /><a target="_blank" href="https://donate.wikimedia.org/">https://donate.wikimedia.org/</a>
+                    <div class="welcome-how">
+                        <h3>How to play</h3>
+                        <p>Guess the 5-letter word in 6 tries. Each guess colors the tiles:</p>
+                        <ul class="welcome-legend">
+                            <li><span class="demo green">B</span> Right letter, right spot</li>
+                            <li><span class="demo yellow">A</span> Right letter, wrong spot</li>
+                            <li><span class="demo none">X</span> Not in the word</li>
+                        </ul>
+                    </div>
+
+                    <p class="welcome-credits">
+                        Definitions from <a target="_blank" href="https://donate.wikimedia.org/">Wiktionary</a> ·
+                        Contribute on <a target="_blank" href="https://github.com/iambriansreed/sordle">GitHub</a><br />
+                        Uses Google Analytics &amp; cookies. Usage is consent.
                     </p>
-
-                    <p>
-                        If you want to add more to the app submit a
-                        <a target="_blank" href="https://github.com/iambriansreed/sordle">pull request</a>.
-                    </p>
-
-                    <p>
-                        The real Wordle app can be found here:
-                        <a href="https://www.nytimes.com/games/wordle" target="_blank"
-                            >https://www.nytimes.com/games/wordle</a
-                        >.
-                    </p>
-
-                    <p>This site uses Google Analytics and may use other cookies. Usage is consent.</p>
                 </div>
                 <div class="footer">
-                    <button type="button" data-action="closeModal">Start</button>
+                    <button type="button" data-action="closeModal">Play</button>
                 </div>
             </div>
         </template>

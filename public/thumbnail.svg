@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" width="1200" height="600" role="img" aria-label="Sordle — sort of like Wordle">
+    <defs>
+        <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#161619" />
+            <stop offset="1" stop-color="#0c0c0e" />
+        </linearGradient>
+    </defs>
+
+    <rect width="1200" height="600" fill="url(#bg)" />
+
+    <!-- progress-style green perimeter -->
+    <rect x="22" y="22" width="1156" height="556" rx="26" fill="none" stroke="#2ea043" stroke-width="6" />
+
+    <!-- wordmark -->
+    <text
+        x="600"
+        y="215"
+        text-anchor="middle"
+        font-family="'Helvetica Neue', 'Segoe UI', Arial, sans-serif"
+        font-size="150"
+        font-weight="800"
+        letter-spacing="-6"
+    >
+        <tspan fill="#f1f1f1">S</tspan><tspan fill="#ffd159">o</tspan><tspan fill="#f1f1f1">rdle</tspan>
+    </text>
+
+    <!-- guess row spelling BRAIN -->
+    <g
+        font-family="'Helvetica Neue', 'Segoe UI', Arial, sans-serif"
+        font-size="64"
+        font-weight="700"
+        text-anchor="middle"
+    >
+        <rect x="297" y="300" width="110" height="110" rx="12" fill="#2ea043" />
+        <text x="352" y="374" fill="#ffffff">B</text>
+
+        <rect x="421" y="300" width="110" height="110" rx="12" fill="#2ea043" />
+        <text x="476" y="374" fill="#ffffff">R</text>
+
+        <rect x="545" y="300" width="110" height="110" rx="12" fill="#e0b400" />
+        <text x="600" y="374" fill="#111111">A</text>
+
+        <rect x="669" y="300" width="110" height="110" rx="12" fill="#3a3a3c" />
+        <text x="724" y="374" fill="#ffffff">I</text>
+
+        <rect x="793" y="300" width="110" height="110" rx="12" fill="#2ea043" />
+        <text x="848" y="374" fill="#ffffff">N</text>
+    </g>
+
+    <!-- tagline -->
+    <text
+        x="600"
+        y="500"
+        text-anchor="middle"
+        font-family="'Helvetica Neue', 'Segoe UI', Arial, sans-serif"
+        font-size="34"
+        fill="#bdbdbd"
+    >
+        <tspan font-style="italic" fill="#e6e6e6">Sort</tspan> of like Wordle
+    </text>
+</svg>
