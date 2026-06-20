@@ -1,20 +1,200 @@
-import './main.scss';
-import { useWords, $, $$, useNotifications, waitFor, waitForFramePaint } from './utils';
+/**
+ * Sordle client
+ *
+ * skrapa compiles this with tsconfig.client.json and inlines the output as a
+ * plain <script>, so it must be self-contained: no imports, no exports.
+ */
 
-const MAX_ATTEMPTS = 6;
-const WORD_LENGTH = 5;
+type Word = {
+    word: string;
+    meanings: {
+        partOfSpeech: string;
+        definitions?:
+            | {
+                  definition: string;
+                  synonyms?: null | null[];
+                  antonyms?: null | null[];
+                  example: string;
+              }[]
+            | null;
+        synonyms?: null | null[];
+        antonyms?: null | string[];
+    }[];
+};
 
 type Status = 'green' | 'none' | 'yellow';
 
-function app() {
-    // Styles are injected by the './main.scss' import above, so it's safe to reveal the app.
+type SavedGame = { word: string; guesses: string[]; current: string };
+
+const SAVE_KEY = 'sordle.key';
+const MAX_ATTEMPTS = 6;
+const WORD_LENGTH = 5;
+const STATUS_PRIORITY: Record<Status, number> = {
+    none: 0,
+    yellow: 1,
+    green: 2,
+};
+// matches word count in https://github.com/iambriansreed/sordle-words/tree/main
+const WORD_COUNT = 7434;
+
+// ---------------------------------------------------------------------------
+// Utilities (formerly utils.ts)
+// ---------------------------------------------------------------------------
+
+const $$ = (selector: string, container: ParentNode = document): HTMLElement[] => {
+    const elements = Array.from(container.querySelectorAll<HTMLElement>(selector));
+    if (!elements) throw new Error(`Element not found: ${selector}`);
+    return elements;
+};
+
+const $ = (selector: string, container: ParentNode = document): HTMLElement => {
+    const element = container?.querySelector<HTMLElement>(selector);
+    if (!element) throw new Error(`Element not found: ${selector}`);
+    return element;
+};
+
+const useFetch = (setLoading: (loading: boolean) => void) => {
+    return async (url: string) => {
+        setLoading(true);
+        return (
+            window
+                .fetch(url)
+                .then((r) => r.json())
+                .then(async (response) => {
+                    setLoading(false);
+                    return response;
+                })
+                .catch(() => null) || null
+        );
+    };
+};
+
+/*
+
+
+```javascript
+const words = await fetch('https://iambrian.com/sordle-words/5.json').then((r) => r.json());
+```
+
+**Get a single word:**
+
+```javascript
+const word = await fetch('https://iambrian.com/sordle-words/5/aargh.json').then((r) => r.json());
+```
+
+**Get a random word:**
+
+```javascript
+// Pick a random index (0-7433)
+const randomIndex = Math.floor(Math.random() * 7434);
+
+// Get the word file in one request
+const word = await fetch(`https://iambrian.com/sordle-words/5/${randomIndex}.json`).then((r) => r.json());
+```
+
+ */
+const useWords = (setLoading: (loading: boolean) => void) => {
+    const fetcher = useFetch(setLoading);
+
+    const getWord = async (word: string): Promise<null | Word> => {
+        return await fetcher('https://iambrian.com/sordle-words/5/' + word + '.json');
+    };
+
+    const getRandomWord = async (): Promise<Word> => {
+        const randomIndex = Math.floor(Math.random() * WORD_COUNT);
+
+        // Get the word file in one request
+        return await fetcher(`https://iambrian.com/sordle-words/5/${randomIndex}.json`);
+    };
+
+    return {
+        getRandomWord,
+        getWord,
+    };
+};
+
+const waitFor = async (ms: number) =>
+    await new Promise<void>((resolve) => {
+        setTimeout(() => {
+            resolve();
+        }, ms);
+    });
+
+const waitForFramePaint = async () =>
+    await new Promise((resolve) => {
+        requestAnimationFrame(() => {
+            const messageChannel = new MessageChannel();
+            messageChannel.port1.onmessage = resolve;
+            messageChannel.port2.postMessage(undefined);
+        });
+    });
+
+function useNotifications() {
+    const $notify = $('.notify');
+
+    let showHelperTimeout: ReturnType<typeof setTimeout>;
+
+    const hideNotify = () => {
+        $notify.classList.remove('show');
+        showHelperTimeout = setTimeout(() => {
+            $notify.innerHTML = '';
+        }, 220);
+    };
+
+    const notify = (str: string, autoClose = true) => {
+        if (showHelperTimeout) clearTimeout(showHelperTimeout);
+        $notify.innerHTML = str;
+
+        requestAnimationFrame(() => {
+            $notify.classList.add('show');
+        });
+
+        if (autoClose)
+            showHelperTimeout = setTimeout(() => {
+                hideNotify();
+            }, 1500);
+    };
+
+    return {
+        notify,
+        hideNotify,
+    };
+}
+
+function loadSavedGame(): null | SavedGame {
+    try {
+        const raw = localStorage.getItem(SAVE_KEY);
+        if (!raw) return null;
+        const data = JSON.parse(raw);
+        if (!data || typeof data.word !== 'string' || data.word.length !== WORD_LENGTH || !Array.isArray(data.guesses))
+            return null;
+        return {
+            word: data.word,
+            guesses: data.guesses.filter((g: unknown) => typeof g === 'string'),
+            current: typeof data.current === 'string' ? data.current : '',
+        };
+    } catch {
+        return null;
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Game (formerly main.ts)
+// ---------------------------------------------------------------------------
+
+async function app() {
+    // Styles load via the <link> in index.html; reveal the app now that we're running.
     document.documentElement.classList.remove('app-loading');
 
     const $app = $('.app');
-    const $overlay = $('.overlay');
+    const $modals: Record<string, HTMLDialogElement> = {
+        welcome: $('[data-modal="welcome"]') as HTMLDialogElement,
+        success: $('[data-modal="success"]') as HTMLDialogElement,
+        fail: $('[data-modal="fail"]') as HTMLDialogElement,
+    };
     const $main = $('main');
     const themeToggle = $('[data-action="toggleTheme"]');
-    const mainContent = $('main').innerHTML;
+    const cleanAttempts = $('main .attempts').innerHTML;
 
     const THEME_KEY = 'sordle-theme';
     const getInitialTheme = () => {
@@ -44,12 +224,6 @@ function app() {
         transition.finished.finally(() => document.documentElement.classList.remove('theme-swiping'));
     };
 
-    const templates: Record<string, string> = {
-        welcome: $('[data-template="modal-welcome"]').innerHTML,
-        success: $('[data-template="modal-success"]').innerHTML,
-        fail: $('[data-template="modal-fail"]').innerHTML,
-    } as const;
-
     // Intro: title screen shows briefly, then reveals the game — the welcome modal for a
     // fresh game, or a "loading previous game" state while a saved game is restored.
     const $intro = $('[data-intro]', $app);
@@ -74,19 +248,62 @@ function app() {
         } else {
             // Fresh game: show the welcome / explanation modal.
             slideAwayIntro();
-            $overlay.innerHTML = templates.welcome;
+            openWelcome();
             pendingRipple = true;
         }
     };
 
     const introTimer = setTimeout(revealGame, 2200);
 
-    const closeOverlay = () => {
-        $overlay.innerHTML = '';
-        if (pendingRipple) {
-            pendingRipple = false;
-            rippleKeyboard();
+    // Open/close native <dialog> modals through these helpers so the close
+    // animation and an immediate reopen can't race each other. Only one modal is
+    // ever open at a time; `openModal` tracks it.
+    let openModal: HTMLDialogElement | null = null;
+    let closeTimer: ReturnType<typeof setTimeout>;
+    // The active confetti canvas, tracked so it can be lifted into the modal's
+    // top layer (showModal() renders above everything else, canvases included).
+    let $confetti: HTMLCanvasElement | null = null;
+
+    const showModal = (name: keyof typeof $modals) => {
+        clearTimeout(closeTimer);
+        const dialog = $modals[name];
+        // Swap instantly if a different modal is already open (no fade between them).
+        if (openModal && openModal !== dialog && openModal.open) {
+            openModal.classList.remove('closing');
+            openModal.close();
         }
+        dialog.classList.remove('closing');
+        openModal = dialog;
+        if (!dialog.open) dialog.showModal();
+        // Re-parent in-flight confetti into the dialog so it keeps flying over it.
+        if ($confetti && $confetti.parentElement !== dialog) dialog.appendChild($confetti);
+    };
+
+    const closeModal = () => {
+        const dialog = openModal;
+        if (!dialog || !dialog.open || dialog.classList.contains('closing')) return;
+        // Fade the blur/opacity out before closing the dialog. On iOS Safari,
+        // hiding a backdrop-filter element abruptly leaves a stale blurred
+        // snapshot stuck on screen; transitioning to a clear frame avoids it.
+        dialog.classList.add('closing');
+        clearTimeout(closeTimer);
+        closeTimer = setTimeout(() => {
+            dialog.classList.remove('closing');
+            dialog.close();
+            if (openModal === dialog) openModal = null;
+            if (pendingRipple) {
+                pendingRipple = false;
+                rippleKeyboard();
+            }
+        }, 260);
+    };
+
+    // Open the welcome / how-to modal. Reveal its "Give up" button only when a
+    // game is actually underway (some guesses made or the current row started).
+    const openWelcome = () => {
+        showModal('welcome');
+        const inProgress = guesses.length > 0 || attempt.chars.length > 0;
+        $('.give-up', $modals.welcome).classList.toggle('show', inProgress);
     };
 
     const rippleKeyboard = () => {
@@ -123,13 +340,22 @@ function app() {
         const h = window.innerHeight;
         canvas.width = w * dpr;
         canvas.height = h * dpr;
-        document.body.appendChild(canvas);
+        // Append into the open modal's top layer when one is showing, else the body.
+        (openModal ?? document.body).appendChild(canvas);
+        $confetti = canvas;
         ctx.scale(dpr, dpr);
 
         const colors = ['#86e29b', '#ffe27a', '#ffa8a6', '#a9d4ff', '#ffffff', '#d8c7ff'];
         type Particle = {
-            x: number; y: number; vx: number; vy: number;
-            rot: number; vr: number; size: number; color: string; life: number;
+            x: number;
+            y: number;
+            vx: number;
+            vy: number;
+            rot: number;
+            vr: number;
+            size: number;
+            color: string;
+            life: number;
         };
         const particles: Particle[] = [];
 
@@ -176,7 +402,10 @@ function app() {
             });
             frame++;
             if (frame < maxFrames) requestAnimationFrame(tick);
-            else canvas.remove();
+            else {
+                canvas.remove();
+                if ($confetti === canvas) $confetti = null;
+            }
         };
         requestAnimationFrame(tick);
     };
@@ -202,26 +431,19 @@ function app() {
         }, 2000);
     };
 
-    const { checkWord, getRandomWord, getWord, loadWords } = useWords(setLoading);
-
-    loadWords().then(async () => {
-        const saved = loadSavedGame();
-        if (saved) await restoreGame(saved);
-        else await getNewWord();
-    });
+    const { getRandomWord, getWord } = useWords(setLoading);
 
     const { hideNotify, notify } = useNotifications();
-
-    const SAVE_KEY = 'sordle:game';
 
     let wordMeanings: Word;
     let word: string[] = [];
     const guesses: string[] = [];
     const keyStatus: Record<string, Status> = {};
-    let $attempts: HTMLElement;
+    // let $attempts: HTMLElement;
+    // let $attemptsWrapper: HTMLElement;
     const $keyboardKeys: Record<string, HTMLElement> = {};
-    const $chars = () => $$(`main .attempt:nth-child(${attempt.index + 1}) .char`);
-    const $rowChars = (rowIndex: number) => $$(`main .attempt:nth-child(${rowIndex + 1}) .char`);
+    const $chars = () => $$(`main .char[data-row="${attempt.index}"]`);
+    const $rowChars = (rowIndex: number) => $$(`main .char[data-row="${rowIndex}"]`);
     const $progress = $('[data-progress]', $app);
 
     // Top progress line: best guess scored as 20% per correct-placed letter (green)
@@ -241,28 +463,13 @@ function app() {
         $progress.style.setProperty('--progress-num', `${Math.min(100, best)}`);
     };
 
-    const resetMain = async (newWord: string[], newWordMeanings: Word) => {
+    const resetMain = async (nextWord: Word) => {
         hideNotify();
 
-        word = newWord;
-        wordMeanings = newWordMeanings;
+        word = nextWord.word.split('');
+        wordMeanings = nextWord;
         guesses.length = 0;
         Object.keys(keyStatus).forEach((key) => delete keyStatus[key]);
-
-        $main.innerHTML = mainContent;
-
-        $attempts = $('.attempts', $main);
-
-        let attemptsHtml = '';
-        for (let rowIndex = 0; rowIndex < MAX_ATTEMPTS; rowIndex++) {
-            attemptsHtml += `<div class="attempt">`;
-            for (let charIndex = 0; charIndex < WORD_LENGTH; charIndex++) {
-                attemptsHtml += `<div class="char" id="char-${rowIndex}-${charIndex}"><div class="front"></div><div class="back"></div></div>`;
-            }
-            attemptsHtml += `</div>`;
-        }
-
-        $attempts.innerHTML = attemptsHtml;
 
         // Cache keyboard keys synchronously so a restored game can color them immediately.
         Object.keys($keyboardKeys).forEach((key) => delete $keyboardKeys[key]);
@@ -281,8 +488,10 @@ function app() {
         index: 0,
     };
 
+    const getChar = (row: number, col: number) => $(`.char[data-row="${row}"][data-col="${col}"]`);
+
     const setChar = (char: string) => {
-        const $char = $(`#char-${attempt.index}-${attempt.chars.length}`);
+        const $char = getChar(attempt.index, attempt.chars.length);
         $('.front', $char).innerText = char || '';
         $('.back', $char).innerText = char || '';
     };
@@ -291,7 +500,7 @@ function app() {
     const setActiveCell = () => {
         $$('main .char.active').forEach((element) => element.classList.remove('active'));
         if (attempt.chars.length < WORD_LENGTH) {
-            document.getElementById(`char-${attempt.index}-${attempt.chars.length}`)?.classList.add('active');
+            getChar(attempt.index, attempt.chars.length).classList.add('active');
         }
     };
 
@@ -335,24 +544,27 @@ function app() {
 
     const getNewWord = async () => {
         // Locally (dev server) always play "brain" to make testing deterministic.
-        let newWordMeanings: Word | null = null;
-        if (import.meta.env.DEV) newWordMeanings = await getWord('brain');
-        if (!newWordMeanings) newWordMeanings = await getRandomWord();
+        let nextWord: null | Word = null;
 
-        await resetMain(newWordMeanings.word.split(''), newWordMeanings);
+        // dev only - nextWord = await getWord('brain');
+
+        if (!nextWord) nextWord = await getRandomWord();
+
+        await resetMain(nextWord);
+
         saveGame();
         markGameReady();
     };
 
-    const loadDefinitions = (solvedWord = word.join(''), meanings = wordMeanings) => {
+    const loadDefinitions = (target: HTMLElement, solvedWord = word.join(''), meanings = wordMeanings) => {
         if (!meanings?.meanings) return;
 
         setTimeout(() => {
-            $('[data-definition]', $overlay).innerHTML = `<h3>${solvedWord}</h3>
+            $('[data-definition]', target).innerHTML = `<h3>${solvedWord}</h3>
 <ul class="meanings">
     ${meanings?.meanings
         .map(
-            (meaning) => `    
+            (meaning) => `
     <li>
         <p class="part-of-speech"><span>${meaning.partOfSpeech}</span></p>
         <ol>
@@ -373,25 +585,6 @@ function app() {
         }, 1);
     };
 
-    type SavedGame = { word: string; guesses: string[]; current: string };
-
-    const loadSavedGame = (): SavedGame | null => {
-        try {
-            const raw = localStorage.getItem(SAVE_KEY);
-            if (!raw) return null;
-            const data = JSON.parse(raw);
-            if (!data || typeof data.word !== 'string' || data.word.length !== WORD_LENGTH || !Array.isArray(data.guesses))
-                return null;
-            return {
-                word: data.word,
-                guesses: data.guesses.filter((g: unknown) => typeof g === 'string'),
-                current: typeof data.current === 'string' ? data.current : '',
-            };
-        } catch {
-            return null;
-        }
-    };
-
     const saveGame = () => {
         localStorage.setItem(
             SAVE_KEY,
@@ -399,7 +592,10 @@ function app() {
         );
     };
 
-    const clearGame = () => localStorage.removeItem(SAVE_KEY);
+    const clearGame = () => {
+        localStorage.removeItem(SAVE_KEY);
+        $('main .attempts').innerHTML = cleanAttempts;
+    };
 
     const setKeyColor = (char: string, color: Status) => {
         const best = getKeyboardKeyColor(keyStatus[char], color);
@@ -430,17 +626,15 @@ function app() {
         const won = saved.guesses[saved.guesses.length - 1] === saved.word;
         if (won || saved.guesses.length >= MAX_ATTEMPTS) {
             clearGame();
-            await getNewWord();
-            return;
+            return await getNewWord();
         }
 
-        const meanings = await getWord(saved.word);
-        if (!meanings) {
-            await getNewWord();
-            return;
+        const savedWord = await getWord(saved.word);
+        if (!savedWord) {
+            return await getNewWord();
         }
 
-        await resetMain(saved.word.split(''), meanings);
+        await resetMain(savedWord);
 
         saved.guesses.forEach((guess, rowIndex) => {
             guesses.push(guess);
@@ -451,7 +645,7 @@ function app() {
         const current = saved.current.split('');
         setAttempt({ chars: current, index: saved.guesses.length });
         current.forEach((char, charIndex) => {
-            const element = $(`#char-${attempt.index}-${charIndex}`);
+            const element = getChar(attempt.index, charIndex);
             $('.front', element).innerText = char;
             $('.back', element).innerText = char;
         });
@@ -462,20 +656,20 @@ function app() {
 
     const giveUp = () => {
         if (flipping || !word.length) return;
-        $overlay.innerHTML = templates.fail;
-        loadDefinitions();
+        showModal('fail');
+        loadDefinitions($modals.fail);
         clearGame();
         getNewWord();
     };
 
     // Testing helper: reveal the success modal for the current word from the console.
     (window as unknown as { sordleWin: () => void }).sordleWin = () => {
-        $overlay.innerHTML = templates.success;
+        showModal('success');
         setTimeout(() => {
             const count = attempt.index || 1;
-            $('[data-attempt-text]', $overlay).innerText = ` ${count} ${count === 1 ? 'attempt' : 'attempts'}`;
+            $('[data-attempt-text]', $modals.success).innerText = ` ${count} ${count === 1 ? 'attempt' : 'attempts'}`;
         }, 1);
-        loadDefinitions();
+        loadDefinitions($modals.success);
         fireConfetti();
     };
 
@@ -486,7 +680,7 @@ function app() {
             return;
         }
 
-        const invalidWord = !(await checkWord(attempt.chars.join('')));
+        const invalidWord = !(await getWord(attempt.chars.join('')));
 
         if (invalidWord) {
             animateError('row');
@@ -515,8 +709,6 @@ function app() {
         const won = correct === WORD_LENGTH;
         const lost = !won && guessedIndex + 1 === MAX_ATTEMPTS;
 
-        setAttempt({ chars: [], index: guessedIndex + 1 });
-
         if (won) {
             // Celebrate on the winning board first, then reveal the success modal.
             const solvedWord = word.join('');
@@ -524,26 +716,31 @@ function app() {
             fireConfetti();
             clearGame();
             setTimeout(() => {
-                $overlay.innerHTML = templates.success;
+                showModal('success');
                 setTimeout(() => {
                     const count = guessedIndex + 1;
-                    $('[data-attempt-text]', $overlay).innerText = ` ${count} ${count === 1 ? 'attempt' : 'attempts'}`;
+                    $('[data-attempt-text]', $modals.success).innerText =
+                        ` ${count} ${count === 1 ? 'attempt' : 'attempts'}`;
                 }, 1);
-                loadDefinitions(solvedWord, solvedMeanings);
+                loadDefinitions($modals.success, solvedWord, solvedMeanings);
                 getNewWord();
             }, 1100);
         } else if (lost) {
-            $overlay.innerHTML = templates.fail;
-            loadDefinitions();
+            showModal('fail');
+            loadDefinitions($modals.fail);
             clearGame();
             getNewWord();
         } else {
             saveGame();
+            setAttempt({ chars: [], index: guessedIndex + 1 });
         }
     };
 
     const handleKey = (key: keyof typeof $keyboardKeys) => {
         if (flipping) return;
+
+        // An open modal makes the board inert; ignore physical-keyboard input.
+        if (openModal?.open) return;
 
         if (!$keyboardKeys[key]) return;
 
@@ -600,12 +797,12 @@ function app() {
         if (flipping) return;
 
         if (targetElement.nodeName.toLowerCase() === 'h1') {
-            $overlay.innerHTML = templates.welcome;
+            openWelcome();
             return;
         }
 
         if (targetElement.dataset.action === 'closeModal') {
-            closeOverlay();
+            closeModal();
             return;
         }
 
@@ -621,18 +818,24 @@ function app() {
 
     $app.addEventListener('click', handleClick);
 
-    $overlay.addEventListener('click', () => {
-        closeOverlay();
+    Object.values($modals).forEach((dialog) => {
+        // Click on the dimmed area around the modal (the dialog itself) dismisses it.
+        dialog.addEventListener('click', (e) => {
+            if (e.target === dialog) closeModal();
+        });
+        // ESC: run the fade-out close instead of the dialog's instant native close.
+        dialog.addEventListener('cancel', (e) => {
+            e.preventDefault();
+            closeModal();
+        });
     });
 
     window.addEventListener('keyup', (e) => handleKey(e.key.toLowerCase()));
-}
 
-const STATUS_PRIORITY: Record<Status, number> = {
-    none: 0,
-    yellow: 1,
-    green: 2,
-};
+    const saved = loadSavedGame();
+    if (saved) await restoreGame(saved);
+    else await getNewWord();
+}
 
 function getKeyboardKeyColor(prev: Status | undefined, next: Status): Status {
     return !prev || STATUS_PRIORITY[next] > STATUS_PRIORITY[prev] ? next : prev;

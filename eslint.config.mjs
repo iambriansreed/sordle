@@ -7,10 +7,10 @@ import prettierPlugin from 'eslint-plugin-prettier';
 
 export default defineConfig([
     {
-        files: ['**/*.{js,mjs,cjs,ts,mts,cts}'],
+        files: ['**/*.{js,mjs,cjs,ts,mts,cts,tsx}'],
         plugins: { js, perfectionist, prettierPlugin },
         extends: ['js/recommended'],
-        languageOptions: { globals: globals.browser },
+        languageOptions: { globals: { ...globals.browser, ...globals.node } },
         rules: {
             'no-console': 1,
             semi: ['error', 'always'],
@@ -22,6 +22,7 @@ export default defineConfig([
     },
     tseslint.configs.recommended,
     {
-        ignores: ['dist/**/*', 'node_modules/**/*'],
+        // skrapa.d.ts is generated and overwritten by skrapa on every run.
+        ignores: ['dist/**/*', 'node_modules/**/*', '.skrapa/**/*', 'skrapa.d.ts'],
     },
 ]);

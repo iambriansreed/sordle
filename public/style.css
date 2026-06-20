@@ -29,7 +29,7 @@ body {
     margin: 0;
     padding: 0;
     min-width: 320px;
-    min-height: 100vh;
+    min-height: 100dvh;
     height: 100%;
 
     display: flex;
@@ -117,28 +117,28 @@ body {
     text-shadow: none;
 }
 
-.light-theme .app .attempts .attempt .char .front {
+.light-theme .app .attempts .char .front {
     border: solid 1px #d3d6da;
     background: #ffffff;
     color: #1a1a1a;
     box-shadow: none;
 }
 
-.light-theme .app .attempts .attempt .char .back {
+.light-theme .app .attempts .char .back {
     background-color: #ffffff;
     border: solid 1px #d3d6da;
     color: #1a1a1a;
     box-shadow: none;
 }
 
-.light-theme .app .attempts .attempt .char.none .back {
+.light-theme .app .attempts .char.none .back {
     background-color: #787c7e;
     border-color: #787c7e;
     color: #ffffff;
 }
 
-.light-theme .app .attempts .attempt .char.yellow .back,
-.light-theme .app .attempts .attempt .char.green .back {
+.light-theme .app .attempts .char.yellow .back,
+.light-theme .app .attempts .char.green .back {
     border-color: transparent;
 }
 
@@ -353,7 +353,7 @@ a,
 }
 
 html {
-    height: 100%;
+    height: 100dvh;
 }
 
 a {
@@ -406,7 +406,7 @@ a {
 .app h1 {
     text-align: center;
     font-size: 2.1rem;
-    margin: 1.25rem 1rem 0.05rem;
+    margin: 0;
     color: var(--gray-200);
     letter-spacing: -0.04em;
 }
@@ -459,23 +459,65 @@ a {
     display: flex;
     flex: 1;
     flex-direction: column;
-    justify-content: space-between;
     gap: 0.4rem;
-    padding: 0.5rem 0.3rem 0.25rem;
+    padding: 0 0.9rem;
+    min-height: 0;
+    justify-content: space-around;
 }
 
+/* The overlay is a native <dialog> opened with showModal(); reset the UA chrome
+   (border/padding/max-size/margin) so it behaves like the old full-screen div. */
 .app .overlay {
     z-index: 1000;
     position: fixed;
     inset: 0;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    max-height: none;
+    margin: 0;
+    border: none;
+    padding: 0;
+    color: inherit;
     background: rgba(12, 12, 14, 0.55);
     -webkit-backdrop-filter: blur(12px) saturate(120%);
     backdrop-filter: blur(12px) saturate(120%);
-    display: flex;
+    /* Closed dialogs collapse; only the open one lays out and fades in. An author
+       `display` would otherwise override the UA `dialog:not([open])` rule. */
+    display: none;
     align-items: stretch;
     justify-content: center;
-    padding: 0;
+    transition:
+        opacity 260ms ease,
+        background 260ms ease,
+        -webkit-backdrop-filter 260ms ease,
+        backdrop-filter 260ms ease;
+}
+
+.app .overlay[open] {
+    display: flex;
     animation: overlay-fade 260ms ease both;
+}
+
+/* The dialog paints its own dim/blur, so suppress the native backdrop layer. */
+.app .overlay::backdrop {
+    background: transparent;
+}
+
+/* iOS Safari leaves a ghost of the backdrop-filter blur on screen when the
+   overlay is hidden abruptly. Fading the blur and opacity to zero first
+   guarantees the last painted frame is clear, so no ghost remains. */
+.app .overlay.closing {
+    animation: none;
+    opacity: 0;
+    background: rgba(12, 12, 14, 0);
+    -webkit-backdrop-filter: blur(0px) saturate(100%);
+    backdrop-filter: blur(0px) saturate(100%);
+    pointer-events: none;
+}
+
+.light-theme .app .overlay.closing {
+    background: rgba(243, 244, 246, 0);
 }
 
 @keyframes overlay-fade {
@@ -485,10 +527,6 @@ a {
     to {
         opacity: 1;
     }
-}
-
-.app .overlay:empty {
-    display: none;
 }
 
 .app .overlay .modal {
@@ -593,6 +631,50 @@ a {
     gap: 1.5rem;
 }
 
+/* Pin the buttons to the bottom of the welcome modal (the auto margin eats the
+   free space, overriding justify-content: center) and lay Give up + Continue in
+   a centered row. */
+.app .overlay .modal.welcome .footer {
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+}
+
+/* Secondary "Give up", shown beside Continue only while a game is in progress
+   (JS adds .show). Outlined so the green Continue stays the primary action. */
+.app .overlay .modal .give-up {
+    display: none;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.75rem 1.4rem;
+    font-size: 1rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.72);
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    box-shadow: none;
+}
+
+.app .overlay .modal .give-up.show {
+    display: inline-flex;
+}
+
+.app .overlay .modal .give-up svg {
+    width: 1.1rem;
+    height: 1.1rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+}
+
+.light-theme .app .overlay .modal .give-up {
+    color: rgba(17, 24, 39, 0.7);
+    border-color: rgba(17, 24, 39, 0.2);
+    background: transparent;
+}
+
 .welcome-logo {
     margin: 0;
     font-size: 4.8rem;
@@ -683,29 +765,34 @@ a {
     background: #787c7e;
 }
 
-.app .attempts {
-    display: flex;
-    flex-direction: column;
+.app .attempts-wrapper {
+    flex: 1;
+    min-height: 0;
+    /* container-type: size lets .attempts size itself against this box with
+       cqh/cqw; place-items centers the board within the wrapper. */
+    container-type: size;
+    display: grid;
+    place-items: center;
+}
+
+.app .attempts-wrapper .attempts {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    grid-template-rows: repeat(6, 1fr);
     text-transform: uppercase;
-    width: 100%;
-    /* Cap the board by available height so all six rows fit on short screens. */
-    max-width: min(100%, calc((100dvh - 25.85rem) * 5 / 6 + 1.8rem));
-    margin: clamp(1.75rem, 6vh, 4.75rem) auto 0;
-    padding: 0 0.9rem;
-    gap: 0.6rem;
+    /* Largest 5:6 box that fits the wrapper's width AND height; the wrapper's
+       place-items centers it. block-size takes the limiting dimension, then
+       aspect-ratio gives the matching width. 1fr cells in a 5:6 box are square. */
+    block-size: min(100cqh, 100cqw * 6 / 5);
+    inline-size: auto;
+    aspect-ratio: 5 / 6;
+    padding: 0;
+    gap: 1.5%;
 }
 
-.app .attempts .attempt {
-    display: flex;
-    flex-direction: row;
-    margin: 0;
-    gap: 0.6rem;
-}
-
-.app .attempts .attempt .char {
+.app .attempts .char {
     display: flex;
     position: relative;
-    flex: 1 1 0;
     margin: 0;
     text-transform: uppercase;
     font-weight: 700;
@@ -713,21 +800,15 @@ a {
     min-height: 0;
 }
 
-.app .attempts .attempt .char:before {
-    content: '';
-    display: block;
-    padding-top: 100%;
-}
-
-.app .attempts .attempt .char {
+.app .attempts .char {
     transform-style: preserve-3d;
     transition:
         transform 0.5s ease,
         box-shadow 0.25s ease;
 }
 
-.app .attempts .attempt .char .front,
-.app .attempts .attempt .char .back {
+.app .attempts .char .front,
+.app .attempts .char .back {
     backface-visibility: hidden;
     position: absolute;
     top: 0;
@@ -741,49 +822,49 @@ a {
     box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.18);
 }
 
-.app .attempts .attempt .char .front {
+.app .attempts .char .front {
     border: solid 1px rgba(255, 255, 255, 0.35);
     background: rgba(255, 255, 255, 0.06);
     color: #ffffff;
 }
 
-.app .attempts .attempt .char.active .front {
+.app .attempts .char.active .front {
     border-color: rgba(255, 255, 255, 0.9);
     box-shadow:
         inset 0 -2px 0 rgba(0, 0, 0, 0.18),
         0 0 0 2px rgba(255, 255, 255, 0.18);
 }
 
-.light-theme .app .attempts .attempt .char.active .front {
+.light-theme .app .attempts .char.active .front {
     border-color: #8a9099;
     box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.14);
 }
 
-.app .attempts .attempt .char .back {
+.app .attempts .char .back {
     border: none;
     background-color: rgba(255, 255, 255, 0.16);
     color: white;
     transform: rotateX(-180deg);
 }
 
-.app .attempts .attempt .char.yellow .back {
+.app .attempts .char.yellow .back {
     background-color: var(--yellow);
     color: #111;
     box-shadow: 0 0 24px rgba(212, 170, 0, 0.35);
 }
 
-.app .attempts .attempt .char.green .back {
+.app .attempts .char.green .back {
     background-color: var(--green);
     color: white;
     box-shadow: 0 0 24px rgba(40, 167, 69, 0.35);
 }
 
-.app .attempts .attempt .char.none .back {
+.app .attempts .char.none .back {
     background-color: #3a3a3c;
     color: rgba(255, 255, 255, 0.95);
 }
 
-.app .attempts .attempt .char.flip {
+.app .attempts .char.flip {
     transform: rotateX(-180deg);
 }
 
@@ -791,8 +872,8 @@ a {
     display: flex;
     flex-direction: column;
     max-width: 520px;
-    margin: 0.25rem auto clamp(0.5rem, 2.5vh, 2rem);
-    padding: 0 0.9rem;
+    margin: 0.25rem auto 0;
+    padding: 0;
     width: 100%;
 }
 
@@ -1049,6 +1130,23 @@ a {
     pointer-events: none;
 }
 
+/* The footer (credit, version, Give Up, theme toggle) only appears on the
+   welcome screen — during play the board gets the full height. When the welcome
+   modal is open, lift the footer above the blurred overlay and pin it to the
+   bottom so its links stay legible. */
+.app footer {
+    display: none;
+}
+
+.app:has(.overlay[data-modal='welcome'][open]) footer {
+    display: flex;
+    position: fixed;
+    inset: auto 0 0;
+    z-index: 1001;
+    margin: 0;
+    padding: 0.5rem 1rem calc(0.5rem + env(safe-area-inset-bottom));
+}
+
 footer {
     position: relative;
     margin: 0.3rem 1rem 0.3rem;
@@ -1072,64 +1170,13 @@ footer {
         opacity: 0.5;
     }
 
-    svg {
+    & svg {
         fill: var(--gray-400);
         height: 0.7rem;
         margin: 0 0.125rem;
         vertical-align: text-top;
     }
 
-    .give-up {
-        appearance: none;
-        position: absolute;
-        left: 50%;
-        top: 50%;
-        transform: translate(-50%, -50%);
-        display: inline-flex;
-        align-items: center;
-        gap: 0.4rem;
-        font: inherit;
-        font-size: 0.72rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
-        color: rgba(255, 255, 255, 0.75);
-        background: none;
-        border: none;
-        padding: 0.4rem 0.95rem;
-        cursor: pointer;
-        transition:
-            color 200ms ease,
-            transform 120ms ease;
-    }
-
-    .give-up svg {
-        fill: none;
-        stroke: currentColor;
-        stroke-width: 2;
-        height: 0.85rem;
-        width: 0.85rem;
-        margin: 0;
-    }
-
-    .give-up:hover {
-        color: rgba(255, 255, 255, 0.95);
-    }
-
-    .give-up:active {
-        color: var(--green);
-        transform: translate(-50%, calc(-50% + 1px));
-    }
-}
-
-.light-theme footer .give-up {
-    color: #1f2937;
-    background: none;
-    border: none;
-}
-
-.light-theme footer .give-up:hover {
-    color: #000000;
 }
 
 .landscape-only {
@@ -1141,20 +1188,20 @@ footer {
     color: var(--gray-500);
     display: none;
 
-    h1 {
+    & h1 {
         margin: 0;
-        span {
+        & span {
             color: white;
             display: inline-block;
             transition: all 3s;
             transform: scale(1, 1) translateY(0);
         }
     }
-    p {
+    & p {
         margin: 1rem 0 1.5rem;
     }
 
-    svg {
+    & svg {
         fill: var(--gray-500);
         width: 5rem;
         margin: 0 auto;

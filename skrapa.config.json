@@ -1,0 +1,7 @@
+{
+    "input": "src",
+    "output": "dist",
+    "assets": "public",
+    "port": 8080,
+    "base": "/"
+}
