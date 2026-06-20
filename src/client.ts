@@ -194,7 +194,11 @@ async function app() {
     };
     const $main = $('main');
     const themeToggle = $('[data-action="toggleTheme"]');
-    const cleanAttempts = $('main .attempts').innerHTML;
+    const $attempts = $('main .attempts');
+    const $keyboard = $('.keyboard', $main);
+
+    const cleanKeyboard = $keyboard.innerHTML;
+    const cleanAttempts = $attempts.innerHTML;
 
     const THEME_KEY = 'sordle-theme';
     const getInitialTheme = () => {
@@ -307,10 +311,8 @@ async function app() {
     };
 
     const rippleKeyboard = () => {
-        const keyboard = $('.keyboard', $main);
-        if (!keyboard) return;
-        const keys = $$('button', keyboard);
-        const rect = keyboard.getBoundingClientRect();
+        const keys = $$('button', $keyboard);
+        const rect = $keyboard.getBoundingClientRect();
         const cx = rect.left + rect.width / 2;
         const cy = rect.top + rect.height / 2;
         let max = 1;
@@ -323,9 +325,9 @@ async function app() {
         keys.forEach((key, i) => {
             key.style.setProperty('--ripple-delay', `${Math.round((distances[i] / max) * 260)}ms`);
         });
-        keyboard.classList.remove('ripple');
-        void keyboard.offsetWidth;
-        keyboard.classList.add('ripple');
+        $keyboard.classList.remove('ripple');
+        void $keyboard.offsetWidth;
+        $keyboard.classList.add('ripple');
     };
 
     // Celebration: launch confetti up and inward from both bottom corners.
@@ -594,7 +596,8 @@ async function app() {
 
     const clearGame = () => {
         localStorage.removeItem(SAVE_KEY);
-        $('main .attempts').innerHTML = cleanAttempts;
+        $attempts.innerHTML = cleanAttempts;
+        $keyboard.innerHTML = cleanKeyboard;
     };
 
     const setKeyColor = (char: string, color: Status) => {
